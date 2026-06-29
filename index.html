@@ -1325,6 +1325,8 @@ async function guardar(){
     empDir:gn('f2-op'),empInd:gn('f2-ind'),empAct:gn('f2-act'),
     bdr:BDR_SET.has(municipio),parque:gv('a14-parque'),
     finalidades:{...rF},adicionales:{...rA},
+    gcState:[...gcState],acState:[...acState],
+    a18plan:gv('a18-plan'),a20plan:gv('a20-plan'),
     beneficio:{anos:aT,pct:pT,pctInm:+((afI/100)*pT).toFixed(2),pctIIBB:+((afB2/100)*pT).toFixed(2)},
     obs:gv('obs-gral'),obsCond:gv('obs-cond'),obsAdic:gv('obs-adic'),
     fechaCarga:new Date().toISOString()};
@@ -1429,8 +1431,13 @@ function editProy(id){
   // Restaurar resultados de finalidades y adicionales
   if(p.finalidades)Object.assign(rF,p.finalidades);
   if(p.adicionales)Object.assign(rA,p.adicionales);
-  // Recalcular visualización
+  // Restaurar checkboxes género y ambiental
+  if(p.gcState)gcState=[...p.gcState];
+  if(p.acState)acState=[...p.acState];
+  // Restaurar selects de plan género/ambiental
   setTimeout(()=>{
+    if(p.a18plan){const el=document.getElementById('a18-plan');if(el){el.value=p.a18plan;togGen();restaurarCheckboxes();calcA18();}}
+    if(p.a20plan){const el=document.getElementById('a20-plan');if(el){el.value=p.a20plan;togAmb();restaurarCheckboxes();calcA20();}}
     if(typeof updMonto==='function')updMonto();
     if(typeof calcF2==='function')calcF2();
     if(typeof calcBen==='function')calcBen();
@@ -1464,6 +1471,8 @@ function actualizarProy(id){
     empDir:gn('f2-op'),empInd:gn('f2-ind'),empAct:gn('f2-act'),
     bdr:BDR_SET.has(municipio),parque:gv('a14-parque'),
     finalidades:{...rF},adicionales:{...rA},
+    gcState:[...gcState],acState:[...acState],
+    a18plan:gv('a18-plan'),a20plan:gv('a20-plan'),
     beneficio:{anos:aT,pct:pT,pctInm:+((afI/100)*pT).toFixed(2),pctIIBB:+((afB2/100)*pT).toFixed(2)},
     obs:gv('obs-gral'),obsCond:gv('obs-cond'),obsAdic:gv('obs-adic'),
     fechaModif:new Date().toISOString()
