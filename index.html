@@ -1310,7 +1310,7 @@ async function guardar(){
     obs:gv('obs-gral'),obsCond:gv('obs-cond'),obsAdic:gv('obs-adic'),
     fechaCarga:new Date().toISOString()};
   proyectos.push(p);
-  await window.storage.set('rpie-final',JSON.stringify(proyectos)).catch(()=>{});
+  try{localStorage.setItem('rpie-final',JSON.stringify(proyectos));}catch(e){}
   mapaLoaded=false;
   toast('✓ Proyecto guardado correctamente.');
   resetForm();nTab('proyectos');
@@ -1450,7 +1450,7 @@ function actualizarProy(id){
     fechaModif:new Date().toISOString()
   };
   proyectos[idx]=actualizado;
-  window.storage.set('rpie-final',JSON.stringify(proyectos)).catch(()=>{});
+  try{localStorage.setItem('rpie-final',JSON.stringify(proyectos));}catch(e){}
   mapaLoaded=false;
   toast('✓ Proyecto actualizado correctamente.');
   const btn=document.getElementById('btn-guardar');
@@ -1463,7 +1463,7 @@ function eliminarProy(id){
   if(!p)return;
   if(!confirm(`¿Eliminar el proyecto "${p.nombre}"? Esta acción no se puede deshacer.`))return;
   proyectos=proyectos.filter(x=>x.id!==id);
-  window.storage.set('rpie-final',JSON.stringify(proyectos)).catch(()=>{});
+  try{localStorage.setItem('rpie-final',JSON.stringify(proyectos));}catch(e){}
   toast('Proyecto eliminado.');
   rList();rDash();
 }
@@ -1644,6 +1644,15 @@ async function syncS(){document.getElementById('sync-st').textContent='Sincroniz
 // ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
+// DATOS PRECARGADOS (respaldo Google Sheets)
+// ══════════════════════════════════════════════
+const PROYECTOS_BACKUP=[
+  {id:1750000000001,cuit:'30719060168',razon:'RIGI - SIDERSA ACERIA SDE',nombre:'Proyecto Sidersa+',municipio:'San Nicolás',estado:'En evaluación',sector:'01. Industria manufacturera',tipo:'Planta nueva',monto:286277191,inicio:'2025-05-30',naibb:'241001',partida:'098-75014',afI:100,afB:100,empDir:268,empInd:3500,empAct:0,bdr:false,parque:'',finalidades:{f1:null,f2:null,f3:null,f4:null,f5:null,f6:null,f6a:null,f6b:null,f7:null,f8:null},adicionales:{a13:null,a14:false,a15:null,a16:null,a17:null,a17a:null,a17b:null,a18:null,a20:null},beneficio:{anos:3,pct:20,pctInm:20,pctIIBB:20},obs:'Sucursal Dedicada Especial — Ley 27.742 (RIGI Nacional — Res. 1028/2025). CAPEX: USD 286.277.191. TC: $1188 BNA 30/05/2025. Inicio proyecto: 30/05/2025. Inicio operaciones: 01/10/2027. Sup. a construir: 26.021 m². Domicilio: Estanislao del Campo 0 entre Mendoza y Colectora Ruta 9 San Nicolás. Partidas: 098-75014 / 098-21183 / 098-09104 / 098-60347. Inmueble no propio.',obsCond:'PENDIENTE: dotación actual (F931 ARCA) indicadores F2-F8 y A13-A20. ALERTA: plazo presentación 6 meses desde inicio proyecto (30/05/2025) — vence 30/11/2025 verificar cumplimiento Art. 2° RO. CUIT 30719060168: verificar dualidad con empresa madre. Documentación RIGI Nacional no sustituye a RPIE Provincial.',obsAdic:'A14: San Nicolás NO es BDR (Anexo III). Condiciones solicitadas: empleo sust. importaciones innovación exportaciones género ambiental. Exportaciones proyectadas: USD 0 Año 1 / USD 750.000 Años 2 y 3.',fechaCarga:'2026-06-23T00:00:00.000Z'},
+  {id:1750000000002,cuit:'30537869158',razon:'FRIGORIFICO GORINA S A I C',nombre:'NUEVA DESPOSTADA',municipio:'La Plata',estado:'En evaluación',sector:'01. Industria manufacturera',tipo:'Planta nueva',monto:31645293,inicio:'2025-07-05',naibb:'101012',partida:'055-078841-1',afI:100,afB:100,empDir:650,empInd:1900,empAct:576,bdr:false,parque:'',finalidades:{f1:null,f2:null,f3:null,f4:null,f5:null,f6:null,f6a:null,f6b:null,f7:null,f8:null},adicionales:{a13:null,a14:false,a15:false,a16:null,a17:null,a17a:null,a17b:null,a18:null,a20:null},beneficio:{anos:5,pct:30,pctInm:30,pctIIBB:30},obs:'CUIT: 30537869158. S.A.I.C. Año constitución: 1961. IGJ N°236979. NAIBB: 101012. TC: $1380 BNA 15/04/2026. Monto: USD 31.645.293. Financiamiento: capital USD 9.897.841 + autogenerados USD 21.747.452. Inicio proyecto: 05/07/2025. Inicio operaciones: 05/07/2026. Sup. edificada: 25.493 m². Sup. construir: 13.370 m². Inmueble propio. Domicilio: Calle 501 s/n La Plata. Motivación: reconstrucción post-incendio 17/02/2025. F931: 576 permanentes. Empleo operación: 650 directos + 1.900 indirectos. Cap.: 70.800.000 kg/año. Expo hist.: 73.5% ventas.',obsCond:'PENDIENTE: F2-F8 A13 A16-A18 A20. ALERTA PLAZO: inicio 05/07/2025 — vence 05/01/2026 (Art. 2° RO). Verificar encuadre tipo proyecto: planta nueva vs. reconstrucción post-siniestro. La Plata NO es BDR. Sust. importaciones: NO solicitada. Inversión 100% en Año 1.',obsAdic:'A14: La Plata NO es BDR. A15: no solicitada. A17: perfil exportador fuerte (73.5%). A18 Género: solicitada pendiente plan. A20 Ambiental: solicitada pendiente plan. A16 Innovación: equipamiento moderno.',fechaCarga:'2026-06-28T00:00:00.000Z'},
+  {id:1750000000003,cuit:'30718758552',razon:'Fertil Pampa S.A.U.',nombre:'Proyecto Fertilizantes',municipio:'Bahía Blanca',estado:'En evaluación',sector:'01. Industria manufacturera',tipo:'Planta nueva',monto:2400000000,inicio:'2026-07-01',naibb:'201300',partida:'Parcelas Layout Pampa-CPB',afI:100,afB:100,empDir:300,empInd:700,empAct:0,bdr:false,parque:'',finalidades:{f1:null,f2:null,f3:null,f4:null,f5:null,f6:null,f6a:null,f6b:null,f7:null,f8:null},adicionales:{a13:null,a14:null,a15:null,a16:null,a17:null,a17a:null,a17b:null,a18:null,a20:null},beneficio:{anos:3,pct:20,pctInm:20,pctIIBB:20},obs:'S.A.U. Año constitución: 2024. IGJ N°21085. NAIBB: 201300 (Fabricación de abonos y compuestos de nitrógeno). Empresa nueva sin actividad previa. TC: $1459.42 BNA 31/12/2025. Monto: USD 2.400.000.000. Financiamiento: capital USD 1.000M + crédito exterior USD 1.400M. Producto: urea granulada 2.100.000 t/año + amoníaco. Tecnología: KBR + Stamicarbon ULE. Ubicación: Puerto Ing. White Bahía Blanca (reserva CPB 13/01/2024). Inmueble no propio. Sup. construir: 660.000 m². Inicio proyecto: 01/07/2026. Inicio operaciones: 24/03/2030. Empleo construcción: 3.500 directos + 8.000 indirectos. Empleo operación: 300 directos + 700 indirectos. Cap.: 2.100.000 t/año urea. Expo desde 2030: ~USD 889M/año. Sust. importaciones vida útil: USD 11.380M. Estabilidad fiscal solicitada: 13 años.',obsCond:'PENDIENTE: F2-F8 A13-A20. ALERTA PLAZO: inicio 01/07/2026 — verificar fecha presentación vs. Art. 2° RO. Inmueble no propio: acreditar instrumento explotación exclusiva. Empresa sin antecedentes: verificar Art. 4° Ley 15.510. Partida inmobiliaria sin número ARBA. Estabilidad fiscal 13 años = máximo N3. Sust. importaciones NO marcada en formulario pero descripta en proyecto — analizar encuadre.',obsAdic:'',fechaCarga:'2026-06-28T00:00:00.000Z'}
+];
+
 async function init(){
   // Municipios
   const sel=document.getElementById('g-municipio');
@@ -1657,8 +1666,16 @@ async function init(){
   renderEmpTbl(EMPLEO_DATA);renderExpTbl(EXPO_DATA);
   // Criterios y normativa
   rCrit();rNorm();
-  // Storage
-  try{const r=await window.storage.get('rpie-final');if(r&&r.value)proyectos=JSON.parse(r.value);}catch(e){}
+  // Storage — localStorage primero, luego backup si está vacío
+  try{
+    const local=localStorage.getItem('rpie-final');
+    if(local){proyectos=JSON.parse(local);}
+    else{
+      proyectos=PROYECTOS_BACKUP;
+      localStorage.setItem('rpie-final',JSON.stringify(proyectos));
+      toast('Datos restaurados desde respaldo ✓');
+    }
+  }catch(e){proyectos=PROYECTOS_BACKUP;}
   rDash();updSem();
 }
 init();
