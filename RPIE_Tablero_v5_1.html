@@ -1,0 +1,1776 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tablero RPIE PBA v5.1</title>
+</head>
+<body style="margin:0;padding:0;height:100vh;">
+
+<style>
+:root{
+  --az:#004B98;--az-dk:#003070;--az-lt:#E6EEF8;
+  --fu:#C8006E;--fu-lt:#FAE6F2;--fu-dk:#9A0054;
+  --ce:#009AC7;--ce-lt:#E0F5FA;--ce-dk:#006E8E;
+  --ve:#007A52;--ve-lt:#E0F3EC;--ve-dk:#005438;
+  --am:#F5A800;--am-lt:#FEF3D9;--am-dk:#7A4F00;
+  --ro:#D32F2F;--ro-lt:#FFEBEE;
+  --gr:#4A4A4A;--gr-lt:#F4F4F4;--gr-mid:#D0D0D0;--gr-dk:#1A1A1A;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:system-ui,sans-serif;font-size:13px;background:#fff;color:var(--gr-dk);}
+.app{display:flex;flex-direction:column;height:100vh;}
+/* TOPBAR */
+.topbar{background:var(--az);color:#fff;display:flex;align-items:center;padding:0 .75rem;flex-shrink:0;overflow-x:auto;min-height:40px;}
+.tl{font-size:12px;font-weight:500;padding:10px .75rem 10px 0;border-right:1px solid rgba(255,255,255,.2);margin-right:.75rem;white-space:nowrap;}
+.tl span{color:#7AB8F5;}
+.nt{display:flex;align-items:center;gap:4px;padding:10px 10px;cursor:pointer;font-size:11.5px;color:rgba(255,255,255,.75);border:none;background:none;border-bottom:2px solid transparent;white-space:nowrap;}
+.nt.active{color:#fff;border-bottom-color:var(--fu);font-weight:600;}
+.nt:hover:not(.active){color:#fff;}
+/* LAYOUT */
+.layout{display:flex;flex:1;overflow:hidden;}
+.sb{width:196px;flex-shrink:0;background:var(--az-lt);border-right:1px solid var(--gr-mid);padding:.75rem 0;overflow-y:auto;}
+.sb-lbl{font-size:10px;font-weight:600;color:var(--az);padding:0 .75rem 4px;text-transform:uppercase;letter-spacing:.07em;}
+.sb-i{display:flex;align-items:center;gap:6px;padding:6px .75rem;cursor:pointer;font-size:12px;color:var(--gr);border:none;background:none;width:100%;text-align:left;border-left:3px solid transparent;}
+.sb-i:hover{color:var(--az);background:rgba(0,75,152,.07);}
+.sb-i.active{color:var(--az-dk);background:rgba(0,75,152,.12);border-left-color:var(--az);font-weight:600;}
+.sb-sep{height:1px;background:var(--gr-mid);margin:5px .75rem;}
+.main{flex:1;overflow-y:auto;padding:1.25rem;background:#fff;}
+/* PANELS */
+.panel{display:none;}.panel.active{display:block;}
+.ptitle{font-size:16px;font-weight:600;color:var(--az-dk);margin-bottom:2px;}
+.psub{font-size:11px;color:var(--gr);margin-bottom:1rem;}
+/* STATS */
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:1rem;}
+.sc{border-radius:7px;padding:10px 12px;border-left:3px solid var(--az);background:var(--az-lt);}
+.sc .lb{font-size:10px;color:var(--az);margin-bottom:2px;}
+.sc .vl{font-size:20px;font-weight:600;color:var(--az-dk);}
+/* CARDS */
+.card{background:#fff;border:1px solid var(--gr-mid);border-radius:8px;padding:.875rem 1rem;margin-bottom:.875rem;}
+.ctitle{font-size:13px;font-weight:600;color:var(--az-dk);margin-bottom:8px;}
+/* PROYECTO LIST */
+.ptable{border:1px solid var(--gr-mid);border-radius:7px;overflow:hidden;margin-bottom:.875rem;}
+.prow{display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 65px;gap:7px;padding:8px 10px;border-bottom:1px solid var(--gr-mid);align-items:center;font-size:11px;}
+.prow:last-child{border-bottom:none;}
+.prow:hover{background:var(--az-lt);}
+.phdr{font-size:10px;font-weight:600;color:var(--az);text-transform:uppercase;letter-spacing:.05em;background:var(--az-lt);padding:6px 10px;border-bottom:1px solid var(--gr-mid);}
+/* BADGE */
+.badge{display:inline-flex;align-items:center;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600;}
+.baz{background:var(--az-lt);color:var(--az-dk);}
+.bve{background:var(--ve-lt);color:var(--ve-dk);}
+.bno{background:var(--gr-lt);color:var(--gr);}
+.bpar{background:var(--am-lt);color:var(--am-dk);}
+.bfu{background:var(--fu-lt);color:var(--fu-dk);}
+/* MAPA */
+.map-legend{display:flex;flex-wrap:wrap;gap:10px;padding:7px 10px;background:var(--gr-lt);border-radius:6px;border:1px solid var(--gr-mid);margin-bottom:8px;}
+.leg-i{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--gr);}
+.leg-b{width:12px;height:12px;border-radius:2px;flex-shrink:0;}
+.map-outer{border:1px solid #B0C8E8;border-radius:7px;overflow:hidden;background:#EAF5FB;position:relative;height:520px;}
+#mapa-svg{width:100%;height:100%;cursor:grab;display:none;}
+.map-tt{position:absolute;background:var(--az-dk);color:#fff;padding:5px 10px;border-radius:5px;font-size:10px;pointer-events:none;display:none;white-space:nowrap;z-index:200;}
+.map-ctrls{display:flex;align-items:center;gap:6px;margin-bottom:7px;}
+.mz-btn{background:var(--az);color:#fff;border:none;border-radius:4px;width:26px;height:26px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.mz-btn:hover{background:var(--az-dk);}
+.mz-rst{font-size:11px;padding:0 9px;width:auto;}
+.mz-lbl{font-size:10px;color:var(--gr);margin-left:4px;}
+.map-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:8px;}
+.ms{background:var(--az-lt);border-radius:6px;padding:7px 10px;border-left:3px solid var(--az);}
+.ms .mlb{font-size:9px;color:var(--az);margin-bottom:1px;}
+.ms .mvl{font-size:17px;font-weight:600;color:var(--az-dk);}
+.ms.bdr{background:var(--ce-lt);border-left-color:var(--ce);}
+.ms.bdr .mlb{color:var(--ce-dk);}.ms.bdr .mvl{color:var(--ce-dk);}
+.ms.ap{background:var(--ve-lt);border-left-color:var(--ve);}
+.ms.ap .mlb{color:var(--ve-dk);}.ms.ap .mvl{color:var(--ve-dk);}
+.ms.ev{background:var(--am-lt);border-left-color:var(--am);}
+.ms.ev .mlb{color:var(--am-dk);}.ms.ev .mvl{color:var(--am-dk);}
+/* NORMATIVA */
+.nc{border:1px solid var(--gr-mid);border-radius:7px;overflow:hidden;margin-bottom:.875rem;}
+.nhdr{padding:9px 12px;display:flex;align-items:center;gap:7px;}
+.nhdr.az{background:var(--az);color:#fff;}
+.nhdr.fu{background:var(--fu);color:#fff;}
+.nhdr.ce{background:var(--ce);color:#fff;}
+.nt2{font-size:12px;font-weight:600;flex:1;}
+.ns{font-size:10px;opacity:.8;}
+.ni{padding:9px 12px;border-bottom:1px solid var(--gr-mid);cursor:pointer;}
+.ni:last-child{border-bottom:none;}
+.ni:hover{background:var(--az-lt);}
+.ni-t{font-size:11px;font-weight:600;color:var(--az-dk);margin-bottom:1px;}
+.nexp{display:none;background:var(--gr-lt);padding:10px 12px;font-size:11px;color:var(--gr);line-height:1.65;border-top:1px solid var(--gr-mid);}
+.nexp.open{display:block;}
+.nexp strong{color:var(--az-dk);}
+/* CRITERIOS */
+.ctab-bar{display:flex;border-bottom:1px solid var(--gr-mid);margin-bottom:.875rem;overflow-x:auto;}
+.ctab{padding:7px 11px;font-size:11px;cursor:pointer;border:none;background:none;color:var(--gr);border-bottom:2px solid transparent;white-space:nowrap;}
+.ctab.active{color:var(--az);border-bottom-color:var(--az);font-weight:600;}
+.cpanel{display:none;}.cpanel.active{display:block;}
+.icard{border:1px solid var(--gr-mid);border-radius:6px;padding:11px;margin-bottom:8px;}
+.icard-name{font-size:12px;font-weight:600;color:var(--az-dk);margin-bottom:3px;}
+.icard-def{font-size:11px;color:var(--gr);line-height:1.5;margin-bottom:7px;}
+.icard-op{background:var(--gr-lt);border-radius:5px;padding:8px 10px;font-size:11px;color:var(--gr);line-height:1.5;}
+.icard-op strong{color:var(--az-dk);}
+.inote{font-size:10px;color:var(--fu-dk);background:var(--fu-lt);padding:5px 9px;border-radius:5px;margin-top:6px;display:flex;gap:4px;}
+/* EXPORTAR */
+.er{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:.875rem;}
+/* FORMULARIO NUEVO PROYECTO */
+.proj-tab-bar{display:flex;background:var(--az-lt);border-bottom:2px solid var(--gr-mid);overflow-x:auto;flex-shrink:0;}
+.proj-tab{padding:8px 13px;font-size:11.5px;cursor:pointer;border:none;background:none;color:var(--gr);border-bottom:3px solid transparent;white-space:nowrap;margin-bottom:-2px;}
+.proj-tab.active{color:var(--az-dk);border-bottom-color:var(--az);font-weight:700;background:#fff;}
+.proj-tab:hover:not(.active){background:rgba(0,75,152,.05);}
+.ptc{display:none;padding:1rem 0;}.ptc.active{display:block;}
+/* SECCIONES */
+.sec-hdr{padding:7px 12px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border-radius:6px 6px 0 0;}
+.sec-az{background:var(--az);color:#fff;}
+.sec-fu{background:var(--fu);color:#fff;}
+.sec-ce{background:var(--ce);color:#fff;}
+.sec-ve{background:var(--ve);color:#fff;}
+/* IND CARDS */
+.ind-card{border:1px solid var(--gr-mid);border-radius:8px;overflow:hidden;margin-bottom:1rem;}
+.ind-hdr{padding:8px 12px;display:flex;align-items:center;gap:8px;}
+.fin-hdr{background:var(--az-lt);border-bottom:1px solid #B8CCE4;}
+.add-hdr{background:var(--fu-lt);border-bottom:1px solid #EBACE0;}
+.ind-num{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;}
+.fin-num{background:var(--az);color:#fff;}
+.add-num{background:var(--fu);color:#fff;}
+.ind-title{font-size:12px;font-weight:700;color:var(--az-dk);flex:1;}
+.add-title{color:var(--fu-dk);}
+.ind-body{padding:12px;}
+.ind-def{font-size:11px;color:var(--gr);margin-bottom:10px;line-height:1.55;background:var(--gr-lt);padding:7px 10px;border-radius:5px;border-left:3px solid var(--gr-mid);}
+/* FORM */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;}
+.fg4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:9px;}
+.fgrp{display:flex;flex-direction:column;gap:3px;}
+.fgrp.full{grid-column:1/-1;}
+.flbl{font-size:11px;font-weight:600;color:var(--az-dk);}
+.flbl .r{color:var(--fu);}
+.flbl .note{font-weight:400;color:var(--gr);font-size:10px;}
+.fi,.fs,.fta{padding:6px 9px;border:1px solid var(--gr-mid);border-radius:5px;font-size:12px;background:#fff;color:var(--gr-dk);width:100%;}
+.fi:focus,.fs:focus,.fta:focus{outline:none;border-color:var(--az);}
+.fta{resize:vertical;min-height:60px;}
+.fh{font-size:10px;color:var(--gr);margin-top:1px;}
+.sub-lbl{font-size:10px;font-weight:700;color:var(--gr);text-transform:uppercase;letter-spacing:.06em;padding:9px 0 6px;border-top:1px solid var(--gr-mid);margin-top:4px;}
+.sub-lbl:first-child{border-top:none;padding-top:0;}
+/* RESULTADOS */
+.calc-res{margin-top:8px;padding:7px 11px;border-radius:6px;font-size:11px;display:flex;align-items:flex-start;gap:7px;line-height:1.5;}
+.r-gris{background:var(--gr-lt);border:1px solid var(--gr-mid);color:var(--gr);}
+.r-verde{background:var(--ve-lt);border:1px solid #9FD4BA;color:var(--ve-dk);}
+.r-rojo{background:var(--ro-lt);border:1px solid #FFCDD2;color:var(--ro);}
+.r-am{background:var(--am-lt);border:1px solid #F5CC6A;color:var(--am-dk);}
+/* RADIO / CHECK */
+.rg{display:flex;gap:12px;flex-wrap:wrap;}
+.ro{display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;}
+.ro input{accent-color:var(--az);}
+.cg{display:flex;flex-direction:column;gap:5px;}
+.co{display:flex;align-items:flex-start;gap:6px;font-size:11px;cursor:pointer;line-height:1.4;}
+.co input{accent-color:var(--fu);margin-top:2px;flex-shrink:0;}
+/* SEMAFORO */
+.semaforo{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:7px;margin-bottom:1rem;}
+.sem-item{border-radius:7px;padding:9px;border:1px solid var(--gr-mid);text-align:center;}
+/* BENEFICIOS */
+.ben-sec{border:1px solid var(--gr-mid);border-radius:7px;overflow:hidden;margin-bottom:10px;}
+.ben-sec-hdr{color:#fff;font-size:11px;font-weight:700;padding:6px 11px;}
+.btbl{width:100%;border-collapse:collapse;font-size:11px;}
+.btbl th{padding:6px 9px;font-weight:600;font-size:10px;text-align:left;}
+.btbl th.az{background:var(--az);color:#fff;}
+.btbl th.ce{background:var(--ce);color:#fff;}
+.btbl th.fu{background:var(--fu);color:#fff;}
+.btbl th.ve{background:var(--ve);color:#fff;}
+.btbl td{padding:5px 9px;border-bottom:1px solid var(--gr-mid);color:var(--gr);}
+.btbl tr:last-child td{border-bottom:none;}
+.btbl tr.tot td{background:var(--az);color:#fff;font-weight:700;}
+.btbl tr.maxtbl td{background:var(--gr-lt);font-size:10px;color:var(--gr);}
+.btbl tr.add td:first-child{padding-left:20px;color:var(--ce-dk);font-size:10px;}
+.fund-box{background:var(--az-lt);border:1px solid #B0C8E8;border-radius:7px;padding:1rem;margin-top:.75rem;}
+.fund-lbl{font-size:10px;font-weight:700;color:var(--az);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.fund-txt{font-size:11px;color:var(--gr);line-height:1.65;}
+.fund-txt strong{color:var(--az-dk);}
+.fund-norm{font-size:10px;background:var(--az);color:#fff;padding:3px 9px;border-radius:20px;display:inline-flex;gap:3px;margin-top:4px;}
+/* MISC */
+.nota{font-size:10px;color:var(--am-dk);background:var(--am-lt);padding:5px 9px;border-radius:5px;border-left:3px solid var(--am);margin-top:6px;}
+.info{font-size:10px;color:var(--ce-dk);background:var(--ce-lt);padding:5px 9px;border-radius:5px;border-left:3px solid var(--ce);margin-top:6px;}
+.ext-link{color:var(--ce-dk);font-size:11px;text-decoration:none;display:inline-flex;align-items:center;gap:3px;}
+.ext-link:hover{text-decoration:underline;}
+.search-inp{padding:5px 9px;border:1px solid var(--gr-mid);border-radius:5px;font-size:12px;width:100%;margin-bottom:7px;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid var(--gr-mid);background:#fff;color:var(--gr-dk);}
+.btn:hover{background:var(--gr-lt);}
+.btn-az{background:var(--az);color:#fff;border-color:var(--az);}.btn-az:hover{background:var(--az-dk);}
+.btn-fu{background:var(--fu);color:#fff;border-color:var(--fu);}.btn-fu:hover{background:var(--fu-dk);}
+.btn-ce{background:var(--ce);color:#fff;border-color:var(--ce);}.btn-ce:hover{background:var(--ce-dk);}
+.btn-sm{padding:4px 9px;font-size:11px;}
+.data-tbl{width:100%;border-collapse:collapse;font-size:11px;}
+.data-tbl th{background:var(--az);color:#fff;padding:6px 9px;text-align:left;font-weight:600;font-size:10px;}
+.data-tbl th.fu{background:var(--fu);}
+.data-tbl th.ve{background:var(--ve);}
+.data-tbl td{padding:5px 9px;border-bottom:1px solid var(--gr-mid);vertical-align:middle;}
+.data-tbl tr:hover td{background:var(--az-lt);}
+.toast{position:fixed;bottom:16px;right:16px;z-index:9999;background:var(--az-dk);color:#fff;padding:8px 14px;border-radius:7px;font-size:11px;display:none;gap:7px;align-items:center;}
+.toast.show{display:flex;}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,50,.45);z-index:5000;display:none;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;}
+.modal-overlay.open{display:flex;}
+.modal{background:#fff;border-radius:10px;width:100%;max-width:860px;box-shadow:0 8px 40px rgba(0,0,0,.22);margin:auto;}
+.modal-hdr{background:var(--az);color:#fff;padding:11px 16px;border-radius:10px 10px 0 0;display:flex;align-items:center;gap:10px;}
+.modal-hdr-title{font-size:13px;font-weight:600;flex:1;}
+.modal-close{background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:0 4px;}
+.modal-body{padding:14px;max-height:78vh;overflow-y:auto;}
+.modal-sec-title{font-size:10px;font-weight:700;color:var(--az);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 6px;padding-bottom:3px;border-bottom:1px solid var(--gr-mid);}
+.modal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:7px;margin-bottom:4px;}
+.mf{display:flex;flex-direction:column;gap:2px;}
+.mf label{font-size:10px;font-weight:600;color:var(--gr);}
+.mf input,.mf select,.mf textarea{padding:5px 8px;border:1px solid var(--gr-mid);border-radius:4px;font-size:11.5px;color:var(--gr);background:#fff;width:100%;}
+.mf input:focus,.mf select:focus{outline:none;border-color:var(--az);}
+.mf textarea{resize:vertical;min-height:48px;}
+.mf.full{grid-column:1/-1;}
+.modal-footer{padding:11px 16px;border-top:1px solid var(--gr-mid);display:flex;justify-content:flex-end;gap:8px;}
+.ib-si{background:var(--ve-lt);color:var(--ve-dk);display:inline-flex;align-items:center;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600;}
+.ib-no{background:var(--ro-lt);color:var(--ro);display:inline-flex;align-items:center;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600;}
+.ib-nd{background:var(--gr-lt);color:var(--gr);display:inline-flex;align-items:center;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600;}
+
+</style>
+
+<div class="app">
+<nav class="topbar">
+  <div class="tl">RPIE <span>PBA</span></div><div id="autosave-ind" style="font-size:10px;color:rgba(255,255,255,.55);padding:0 10px;white-space:nowrap;"></div>
+  <button class="nt active" onclick="nTab('dashboard')" id="nt-dashboard">Panel</button>
+  <button class="nt" onclick="nTab('nuevo')" id="nt-nuevo">+ Nuevo proyecto</button>
+  <button class="nt" onclick="nTab('proyectos')" id="nt-proyectos">Proyectos</button>
+  <button class="nt" onclick="nTab('criterios')" id="nt-criterios">Criterios</button>
+  <button class="nt" onclick="nTab('normativa')" id="nt-normativa">Normativa</button>
+  <button class="nt" onclick="nTab('exportar')" id="nt-exportar">Exportar</button><button class="nt" onclick="getGoogleToken().then(tk=>{if(tk)guardarEnDrive(JSON.parse(localStorage.getItem('rpie-v5')||'[]'))})" id="nt-drive" title="Backup en Google Drive" style="color:#7AB8F5;">&#9729; Drive</button>
+</nav>
+<div class="layout">
+<aside class="sb">
+  <div class="sb-lbl">Vistas</div>
+  <button class="sb-i active" id="sb-dashboard" onclick="sw('dashboard')">📊 Resumen</button>
+  <button class="sb-i" id="sb-sectores" onclick="sw('sectores')">🏭 Por sector</button>
+  <button class="sb-i" id="sb-mapa" onclick="sw('mapa')">🗺️ Mapa</button>
+  <div class="sb-sep"></div>
+  <div class="sb-lbl">Gestión</div>
+  <button class="sb-i" id="sb-nuevo" onclick="sw('nuevo')">➕ Nuevo proyecto</button>
+  <button class="sb-i" id="sb-proyectos" onclick="sw('proyectos')">📄 Lista de proyectos</button>
+  <div class="sb-sep"></div>
+  <div class="sb-lbl">Referencia</div>
+  <button class="sb-i" id="sb-criterios" onclick="sw('criterios')">✅ Criterios y matriz</button>
+  <button class="sb-i" id="sb-normativa" onclick="sw('normativa')">📖 Normativa</button>
+  <button class="sb-i" id="sb-exportar" onclick="sw('exportar')">⬇️ Exportar</button>
+</aside>
+<main class="main">
+
+<!-- DASHBOARD -->
+<div class="panel active" id="panel-dashboard">
+  <div class="ptitle">Resumen general — RPIE PBA</div>
+  <div class="psub" id="dash-sub">Sin proyectos cargados.</div>
+  <div class="sg">
+    <div class="sc"><div class="lb">Proyectos totales</div><div class="vl" id="st-total">0</div></div>
+    <div class="sc" style="border-left-color:var(--fu);background:var(--fu-lt);"><div class="lb" style="color:var(--fu);">Inversión total (USD)</div><div class="vl" style="color:var(--fu-dk);font-size:15px;padding-top:3px;" id="st-inv">—</div></div>
+    <div class="sc" style="border-left-color:var(--ce);background:var(--ce-lt);"><div class="lb" style="color:var(--ce-dk);">Sector más frecuente</div><div class="vl" style="color:var(--ce-dk);font-size:13px;padding-top:2px;" id="st-sector">—</div></div>
+    <div class="sc" style="border-left-color:var(--ve);background:var(--ve-lt);"><div class="lb" style="color:var(--ve);">Municipios con proyectos</div><div class="vl" style="color:var(--ve-dk);" id="st-mun">0</div></div>
+  </div>
+  <div class="card"><div class="ctitle">Distribución por sector</div>
+    <div style="position:relative;width:100%;height:190px;"><canvas id="ch-sector" role="img" aria-label="Proyectos por sector"></canvas></div></div>
+  <div class="card"><div class="ctitle">Proyectos cargados</div><div id="dash-list" style="font-size:11px;color:var(--gr);">Sin proyectos aún.</div></div>
+</div>
+
+<!-- SECTORES -->
+<div class="panel" id="panel-sectores">
+  <div class="ptitle">Análisis por sector</div><div class="psub">Inversión y empleo por sector estratégico.</div>
+  <div class="card"><div class="ctitle">Inversión (USD M) por sector</div>
+    <div style="position:relative;width:100%;height:220px;"><canvas id="ch-inv" role="img" aria-label="Inversión por sector"></canvas></div></div>
+  <div class="card"><div class="ctitle">Empleo estimado por sector</div>
+    <div style="position:relative;width:100%;height:220px;"><canvas id="ch-emp" role="img" aria-label="Empleo por sector"></canvas></div></div>
+</div>
+
+<!-- MAPA -->
+<div class="panel" id="panel-mapa">
+  <div class="ptitle">Mapa de proyectos — Provincia de Buenos Aires</div>
+  <div class="psub">Partidos coloreados según Anexo III Decreto 2731/2025 (92 partidos de BDR).</div>
+  <div class="map-stats">
+    <div class="ms"><div class="mlb">Partidos totales PBA</div><div class="mvl">135</div></div>
+    <div class="ms bdr"><div class="mlb">Partidos de BDR (Anexo III)</div><div class="mvl">92</div></div>
+    <div class="ms ap"><div class="mlb">Proyectos aprobados</div><div class="mvl" id="ms-ap">0</div></div>
+    <div class="ms ev"><div class="mlb">En evaluación</div><div class="mvl" id="ms-ev">0</div></div>
+  </div>
+  <div style="margin-top:9px;"></div>
+  <div class="map-legend">
+    <div class="leg-i"><div class="leg-b" style="background:#B8D9F0;border:1px solid #4A90C4;"></div> Partido de BDR (Anexo III. Dec. 2731/2025)</div>
+    <div class="leg-i"><div class="leg-b" style="background:#DCE9F5;border:1px solid #99B8D4;"></div> Partido sin BDR</div>
+    <div class="leg-i"><span style="font-size:13px;">🏭</span> Proyecto aprobado</div>
+    <div class="leg-i"><span style="font-size:13px;">🔍</span> Proyecto en evaluación</div>
+  </div>
+  <div class="map-ctrls">
+    <button class="mz-btn" id="mz-in">+</button>
+    <button class="mz-btn" id="mz-out">−</button>
+    <button class="mz-btn mz-rst" id="mz-rst">↺ Restablecer</button>
+    <span class="mz-lbl" id="mz-lbl">Zoom: 1×</span>
+  </div>
+  <div class="map-outer" id="map-outer">
+    <div id="map-status" style="padding:28px;text-align:center;font-size:12px;color:var(--gr);">Cargando mapa...</div>
+    <svg id="mapa-svg" viewBox="0 0 700 560"><g id="mapa-g"></g></svg>
+    <div class="map-tt" id="map-tt"></div>
+  </div>
+</div>
+
+<!-- NUEVO PROYECTO -->
+<div class="panel" id="panel-nuevo">
+  <div class="ptitle">Nuevo proyecto de inversión</div>
+  <div class="psub">Completá todos los datos. Los campos con <span style="color:var(--fu);">*</span> son obligatorios.</div>
+  <div class="proj-tab-bar">
+    <button class="proj-tab active" onclick="goPTab(0)" id="pt0">A. Datos generales</button>
+    <button class="proj-tab" onclick="goPTab(1)" id="pt1">B. Finalidades (art. 2°)</button>
+    <button class="proj-tab" onclick="goPTab(2)" id="pt2">C. Beneficios adicionales (art. 15°)</button>
+    <button class="proj-tab" onclick="goPTab(3)" id="pt3">D. Observaciones</button>
+    <button class="proj-tab" onclick="goPTab(4)" id="pt4">E. Cálculo de beneficios</button>
+    <button class="proj-tab" onclick="goPTab(5)" id="pt5">F. Tablas de referencia</button>
+  </div>
+
+  <!-- TAB A -->
+  <div class="ptc active" id="ptc0">
+    <div class="ind-card">
+      <div class="sec-hdr sec-az" style="border-radius:0;">A. Datos del postulante y del proyecto</div>
+      <div class="ind-body">
+        <div class="sub-lbl">Datos del postulante</div>
+        <div class="fg" style="margin-bottom:10px;">
+          <div class="fgrp"><label class="flbl">CUIT <span class="r">*</span></label><input class="fi" id="g-cuit" placeholder="20-12345678-9"></div>
+          <div class="fgrp"><label class="flbl">Razón social <span class="r">*</span></label><input class="fi" id="g-razon" placeholder="Empresa S.A."></div>
+        </div>
+        <div class="sub-lbl">Datos del proyecto</div>
+        <div class="fg" style="margin-bottom:10px;">
+          <div class="fgrp"><label class="flbl">Nombre del proyecto <span class="r">*</span></label><input class="fi" id="g-nombre" placeholder="Planta elaboradora..."></div>
+          <div class="fgrp"><label class="flbl">Estado <span class="r">*</span></label>
+            <select class="fs" id="g-estado"><option value="">Seleccionar...</option><option value="evaluacion">En evaluación</option><option value="aprobado">Aprobado</option></select></div>
+          <div class="fgrp"><label class="flbl">Municipio <span class="r">*</span></label><select class="fs" id="g-municipio"><option value="">Seleccionar...</option></select></div>
+          <div class="fgrp"><label class="flbl">Tipo de proyecto <span class="r">*</span></label>
+            <select class="fs" id="g-tipo"><option value="">Seleccionar...</option><option value="Planta nueva">Planta o inversión nueva</option><option value="Ampliación">Ampliación (≥30% cap. teórica)</option><option value="Nuevo proceso">Nuevo proceso productivo (≥30% activo fijo)</option></select></div>
+          <div class="fgrp"><label class="flbl">Sector estratégico <span class="r">*</span></label>
+            <select class="fs" id="g-sector" onchange="onSectorChange()"><option value="">Seleccionar...</option>
+              <option value="01. Industria manufacturera">01. Industria manufacturera</option>
+              <option value="02. Industrias culturales">02. Industrias culturales</option>
+              <option value="03. Servicios turísticos">03. Servicios turísticos</option>
+              <option value="04. Servicios logísticos">04. Servicios logísticos</option>
+              <option value="05. Servicios de salud">05. Servicios de salud</option>
+              <option value="06. Otros servicios">06. Otros servicios</option>
+              <option value="07. Intensivos en recursos naturales">07. Intensivos en recursos naturales</option>
+              <option value="08. Declarado de interés estratégico PE">08. Declarado de interés estratégico PE</option>
+            </select></div>
+          <div class="fgrp" id="g-pe-wrap" style="display:none;"><label class="flbl">Descripción del sector declarado de interés estratégico <span class="r">*</span></label><input class="fi" id="g-sector-pe" placeholder="Describir el sector..."></div>
+          <div class="fgrp"><label class="flbl">Monto de inversión total (USD) <span class="r">*</span></label><input class="fi" id="g-monto" type="number" min="0" placeholder="5000000" oninput="onMontoChange()"></div>
+          <div class="fgrp"><label class="flbl">Fecha de inicio</label><input class="fi" id="g-inicio" type="date"></div>
+        </div>
+        <div class="sub-lbl">Datos impositivos</div>
+        <div class="fg4" style="margin-bottom:10px;">
+          <div class="fgrp"><label class="flbl">Código NAIBB-18 principal <span class="r">*</span></label><input class="fi" id="g-naibb" placeholder="101012"></div>
+          <div class="fgrp"><label class="flbl">Partida inmobiliaria</label><input class="fi" id="g-partida" placeholder="055-078841-1"></div>
+          <div class="fgrp"><label class="flbl">% afectación inmueble al proyecto</label><input class="fi" id="g-afim" type="number" min="0" max="100" placeholder="100" oninput="calcBen()"></div>
+          <div class="fgrp"><label class="flbl">% producción nueva / total</label><input class="fi" id="g-afib" type="number" min="0" max="100" placeholder="100" oninput="calcBen()"></div>
+        </div>
+        <div id="g-nivel-disp" class="info" style="display:none;"></div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;"><button class="btn btn-az" onclick="goPTab(1)">Siguiente: Finalidades →</button></div>
+  </div>
+
+  <!-- TAB B: FINALIDADES -->
+  <div class="ptc" id="ptc1">
+    <div style="background:var(--az-lt);border:1px solid #B0C8E8;border-radius:7px;padding:9px 13px;margin-bottom:1rem;">
+      <strong style="color:var(--az-dk);font-size:12px;">Finalidades del régimen — art. 2° Ley 15.510</strong>
+      <p style="font-size:11px;color:var(--gr);margin-top:3px;">El proyecto debe contribuir al cumplimiento de al menos una finalidad para ser considerado estratégico. Evaluación de carácter general: impacto a nivel provincial o sectorial.</p>
+    </div>
+
+    <!-- F1 -->
+    <div class="ind-card"><div class="ind-hdr fin-hdr"><span class="ind-num fin-num">F1</span><span class="ind-title">Sector estratégico provincial — art. 2° inc. a) · art. 5° Ley 15.510</span></div>
+    <div class="ind-body"><div class="ind-def">Indicador categórico SÍ/NO. El proyecto pertenece a uno de los sectores alcanzados por la Ley 15.510 (art. 5°) e inscripto en el NAIBB-18 del Anexo II, Dec. 2731/2025.</div>
+    <div id="f1-res" class="calc-res r-gris"><span>⚪</span> Seleccionar sector y NAIBB en "Datos generales"</div></div></div>
+
+    <!-- F2 -->
+    <div class="ind-card"><div class="ind-hdr fin-hdr"><span class="ind-num fin-num">F2</span><span class="ind-title">Impulsar la generación de empleo calificado y/o registrado — art. 2° inc. b)</span></div>
+    <div class="ind-body">
+      <div class="ind-def">Se analiza la variación del empleo directo entre la etapa de inversión y la de operación (Formulario 2,3 Cuadro 11, hoja 3.b). Cálculo: <strong>empleos directos declarados / total empleo provincial de la rama × 100.000</strong>. Se compara con umbrales por rama y nivel de inversión. Fuente: OEDE/SIPA — 1° Trim. 2025.</div>
+      <div class="fg" style="margin-bottom:10px;">
+        <div class="fgrp">
+          <label class="flbl">Rama de actividad (OEDE/SIPA) <span class="r">*</span></label>
+          <input class="search-inp" id="f2-search" placeholder="Buscar rama..." oninput="filtrarRamas()" style="margin-bottom:4px;">
+          <select class="fs" id="f2-rama" size="5" style="height:auto;" onchange="calcF2()"></select>
+        </div>
+        <div class="fgrp">
+          <label class="flbl">Empleo directo — etapa de inversión (Formulario 2,3 Cuadro 11)</label><input class="fi" id="f2-inv" type="number" min="0" placeholder="0" oninput="calcF2()">
+          <label class="flbl" style="margin-top:8px;">Empleo directo — etapa de operación <span class="r">*</span></label><input class="fi" id="f2-op" type="number" min="0" placeholder="0" oninput="calcF2()">
+          <label class="flbl" style="margin-top:8px;">Empleo indirecto — etapa de operación</label><input class="fi" id="f2-ind" type="number" min="0" placeholder="0" oninput="calcF2()">
+          <label class="flbl" style="margin-top:8px;">Dotación actual permanente (último F931 ARCA)</label><input class="fi" id="f2-act" type="number" min="0" placeholder="0" oninput="calcF2()">
+        </div>
+      </div>
+      <div id="f2-res" class="calc-res r-gris"><span>⚪</span> Seleccionar rama y completar empleos para calcular</div>
+      <div class="nota">Ver umbrales completos en pestaña <strong>F. Tablas de referencia</strong>. Fuente: STEySS/OEDE — SIPA, 1° Trim. 2025.</div>
+    </div></div>
+
+    <!-- F3 -->
+    <div class="ind-card"><div class="ind-hdr fin-hdr"><span class="ind-num fin-num">F3</span><span class="ind-title">Promover el desarrollo de proveedores provinciales — art. 2° inc. c)</span></div>
+    <div class="ind-body">
+      <div class="ind-def">Empresa proveedora con establecimiento productivo o asiento principal del negocio y domicilio fiscal en la Provincia de Buenos Aires (Glosario, Anexo I, Dec. 2731/2025).</div>
+      <div class="fg" style="margin-bottom:8px;">
+        <div class="fgrp"><label class="flbl">¿Contrata proveedores radicados en PBA?</label>
+          <select class="fs" id="f3-prov" onchange="calcF3()"><option value="">...</option><option value="Si">Sí</option><option value="No">No</option></select></div>
+        <div class="fgrp"><label class="flbl">% del monto total destinado a proveedores PBA</label>
+          <input class="fi" id="f3-pct" type="number" min="0" max="100" step="0.1" placeholder="0" oninput="calcF3()">
+          <span class="fh">Para proyectos &gt;USD 50M: PDPP obligatorio con línea de base ≥50% (art. 13° Ley 15.510 y art. 5° Reglamento Operativo).</span></div>
+      </div>
+      <div id="f3-res" class="calc-res r-gris"><span>⚪</span> Completar datos</div>
+    </div></div>
+
+    <!-- F4 -->
+    <div class="ind-card"><div class="ind-hdr fin-hdr"><span class="ind-num fin-num">F4</span><span class="ind-title">Fomentar la innovación y transferencia tecnológica — art. 2° inc. d)</span></div>
+    <div class="ind-body">
+      <div class="ind-def">Dos sub-indicadores basados en el Formulario II 3.h — Programa de Innovación y Desarrollo Tecnológico. El proyecto cumple la finalidad si verifica al menos uno de los dos.</div>
+      <div class="sub-lbl">6.a) Variación del monto de I+D: promedio proyectado (años 1-3) vs. promedio histórico (años T-3 a T-1) — Form. II 3.h, Punto 1 "Línea de base" y "Proyección"</div>
+      <div class="info">Umbral mínimo: variación &gt;0% (el proyecto implica mayor inversión en I+D que en el pasado). Umbral sugerido por la AA: <strong>≥10%</strong> para evitar incrementos marginales o meramente inflacionarios.</div>
+      <div class="fg3" style="margin-top:8px;">
+        <div class="fgrp"><label class="flbl">I+D Año T-3 (USD)</label><input class="fi" id="f4-t3" type="number" min="0" placeholder="0" oninput="calcF4()"></div>
+        <div class="fgrp"><label class="flbl">I+D Año T-2 (USD)</label><input class="fi" id="f4-t2" type="number" min="0" placeholder="0" oninput="calcF4()"></div>
+        <div class="fgrp"><label class="flbl">I+D Año T-1 (USD)</label><input class="fi" id="f4-t1" type="number" min="0" placeholder="0" oninput="calcF4()"></div>
+        <div class="fgrp"><label class="flbl">I+D proyectado Año 1 (USD)</label><input class="fi" id="f4-p1" type="number" min="0" placeholder="0" oninput="calcF4()"></div>
+        <div class="fgrp"><label class="flbl">I+D proyectado Año 2 (USD)</label><input class="fi" id="f4-p2" type="number" min="0" placeholder="0" oninput="calcF4()"></div>
+        <div class="fgrp"><label class="flbl">I+D proyectado Año 3 (USD)</label><input class="fi" id="f4-p3" type="number" min="0" placeholder="0" oninput="calcF4()"></div>
+      </div>
+      <div id="f4a-res" class="calc-res r-gris"><span>⚪</span> Completar montos de I+D</div>
+      <div class="sub-lbl" style="margin-top:12px;">6.b) Ratio I+D proyectado / Inversión total del proyecto — primeros 3 años — Form. II 3.h, Punto 1 "Proyección"</div>
+      <div class="info">Umbral mínimo: &gt;0%. Umbral sugerido por la AA: <strong>≥1%</strong> (estándar internacional para considerar inversión en I+D significativa).</div>
+      <div class="fg" style="margin-top:8px;">
+        <div class="fgrp"><label class="flbl">Inversión total del proyecto — Años 1+2+3 (USD) <span class="note">— extraer de Form. II 3.c, Cronograma de inversiones</span></label><input class="fi" id="f4-inv3" type="number" min="0" placeholder="0" oninput="calcF4()"></div>
+      </div>
+      <div id="f4b-res" class="calc-res r-gris"><span>⚪</span> Completar inversión total para calcular ratio</div>
+    </div></div>
+
+    <!-- F5 -->
+    <div class="ind-card"><div class="ind-hdr fin-hdr"><span class="ind-num fin-num">F5</span><span class="ind-title">Diversificar la matriz productiva — art. 2° inc. e)</span></div>
+    <div class="ind-body">
+      <div class="ind-def">Dos reglas de cumplimiento — basta con cumplir una: <strong>a)</strong> La actividad del proyecto está más abajo de las primeras dos actividades del municipio, medidas por % de establecimientos productivos. <strong>b)</strong> La actividad representa menos del 20% de los establecimientos productivos del municipio.</div>
+      <div class="info" style="margin-bottom:10px;">Consultar fuente: <a class="ext-link" href="https://www.cep21.gob.ar/mapas-productivos" target="_blank">🔗 CEP XXI — Mapa Productivo — Establecimientos por municipio y sector (2022)</a></div>
+      <div class="fg" style="margin-bottom:8px;">
+        <div class="fgrp"><label class="flbl">% de establecimientos que representa la actividad en el municipio <span class="note">— dato del CEP XXI</span></label>
+          <input class="fi" id="f5-pct" type="number" min="0" max="100" step="0.1" placeholder="0.0" oninput="calcF5()"></div>
+        <div class="fgrp"><label class="flbl">Posición en el ranking municipal (1 = actividad más frecuente) <span class="note">— dato del CEP XXI</span></label>
+          <input class="fi" id="f5-rank" type="number" min="1" step="1" placeholder="Ej: 3" oninput="calcF5()"></div>
+      </div>
+      <div id="f5-res" class="calc-res r-gris"><span>⚪</span> Completar datos del CEP XXI</div>
+    </div></div>
+
+    <!-- F6 -->
+    <div class="ind-card"><div class="ind-hdr fin-hdr"><span class="ind-num fin-num">F6</span><span class="ind-title">Aumentar exportaciones provinciales y/o sustitución de importaciones — art. 2° inc. f)</span></div>
+    <div class="ind-body">
+      <div class="ind-def">Dos sub-indicadores independientes. El proyecto cumple la finalidad verificando al menos uno.</div>
+      <div class="sub-lbl">6.A) Impacto en exportaciones provinciales — Form. II 3.g "Programa de Incremental Exportador"</div>
+      <div class="ind-def">Exportaciones proyectadas promedio primeros 3 años (USD millones). Umbrales: <strong>≥5%</strong> del total de exportaciones provinciales de la rama de actividad; y <strong>≥0,5%</strong> del total de exportaciones de sectores RPIE (base 2024: USD 23.962M).</div>
+      <div class="fg" style="margin-bottom:8px;">
+        <div class="fgrp"><label class="flbl">Rubro de exportación</label>
+          <select class="fs" id="f6-rubro" onchange="calcF6A()"><option value="">Seleccionar rubro...</option></select></div>
+        <div class="fgrp"><label class="flbl">Exportaciones proyectadas promedio Años 1-3 (USD millones)</label>
+          <input class="fi" id="f6-expo-proy" type="number" min="0" step="0.001" placeholder="0.000" oninput="calcF6A()"></div>
+      </div>
+      <div id="f6a-info" class="info" style="display:none;margin-bottom:6px;"></div>
+      <div id="f6a-res" class="calc-res r-gris"><span>⚪</span> Seleccionar rubro y completar exportaciones proyectadas</div>
+      <div class="sub-lbl" style="margin-top:12px;">6.B) Sustitución de importaciones — SÍ/NO — Form. II 3.f "Programa de Sustitución de Importaciones"</div>
+      <div class="ind-def">Si el proyecto sustituye importaciones, el índice de sustitución se calcula en detalle en el Adicional A15.</div>
+      <div class="fgrp" style="max-width:300px;">
+        <label class="flbl">¿El proyecto sustituye importaciones?</label>
+        <select class="fs" id="f6-sust" onchange="calcF6B()"><option value="">...</option><option value="Si">Sí</option><option value="No">No</option></select></div>
+      <div id="f6b-res" class="calc-res r-gris" style="margin-top:8px;"><span>⚪</span> Seleccionar opción</div>
+    </div></div>
+
+    <!-- F7 -->
+    <div class="ind-card"><div class="ind-hdr fin-hdr"><span class="ind-num fin-num">F7</span><span class="ind-title">Promover un desarrollo territorial más equitativo — art. 2° inc. g)</span></div>
+    <div class="ind-body">
+      <div class="ind-def">Índice de Desarrollo Territorial Equitativo (IDTE): suma ponderada de 4 variables. Resultado: Bajo / Medio bajo / Medio / Medio alto / Alto.</div>
+      <div class="fg" style="margin-bottom:8px;">
+        <div class="fgrp"><label class="flbl">Empleo generado — rango <span class="note">(ponderación 40%)</span></label>
+          <select class="fs" id="f7-emp" onchange="calcIDTE()"><option value="0">Seleccionar rango...</option><option value="1">1–10 empleos → valor 1</option><option value="2">11–50 empleos → valor 2</option><option value="3">51–100 empleos → valor 3</option><option value="4">101–500 empleos → valor 4</option><option value="5">Más de 500 empleos → valor 5</option></select></div>
+        <div class="fgrp"><label class="flbl">Proveedores locales proyectados <span class="note">(ponderación 30%)</span></label>
+          <select class="fs" id="f7-prov" onchange="calcIDTE()"><option value="0">Seleccionar rango...</option><option value="1">1–5 proveedores → valor 1</option><option value="2">6–15 proveedores → valor 2</option><option value="3">16–30 proveedores → valor 3</option><option value="4">31–60 proveedores → valor 4</option><option value="5">Más de 60 proveedores → valor 5</option></select></div>
+        <div class="fgrp"><label class="flbl">Resultado F5 — Diversificación productiva <span class="note">(ponderación 15%)</span></label>
+          <div id="f7-div-auto" style="font-size:12px;color:var(--gr);padding:6px 0;border-bottom:1px solid var(--gr-mid);">— se alimenta automáticamente del resultado de F5</div></div>
+        <div class="fgrp"><label class="flbl">Actividades primarias ≥15% de establecimientos del municipio <span class="note">(ponderación 15%)</span></label>
+          <select class="fs" id="f7-prim" onchange="calcIDTE()"><option value="">...</option><option value="5">Sí — actividades primarias ≥15% de los establecimientos</option><option value="0">No — actividades primarias &lt;15%</option></select>
+          <span class="fh">Verificar en CEP XXI. Distinto del BDR del Anexo III (Dec. 2731/2025).</span></div>
+      </div>
+      <div id="f7-res" class="calc-res r-gris"><span>⚪</span> Completar las 4 variables para calcular IDTE</div>
+    </div></div>
+
+    <!-- F8 -->
+    <div class="ind-card"><div class="ind-hdr fin-hdr"><span class="ind-num fin-num">F8</span><span class="ind-title">Desarrollar nuevos sectores productivos — art. 2° inc. h)</span></div>
+    <div class="ind-body">
+      <div class="ind-def">Utiliza la información de F5. Umbral: la actividad concentra <strong>10% o menos</strong> de los establecimientos productivos del municipio. Por debajo de ese umbral se considera un sector nuevo o de muy escaso desarrollo local.</div>
+      <div id="f8-res" class="calc-res r-gris"><span>⚪</span> Se calcula automáticamente con el dato de F5 (% establecimientos)</div>
+    </div></div>
+
+    <!-- Resumen -->
+    <div class="ind-card" style="border-color:var(--az);">
+      <div class="ind-hdr" style="background:var(--az);border-radius:0;padding:8px 12px;"><span style="color:#fff;font-size:12px;font-weight:700;">Resumen — Cumplimiento de finalidades (art. 2° Ley 15.510)</span></div>
+      <div class="ind-body">
+        <div class="semaforo" id="sem-finalidades"></div>
+        <div id="conclusion-estrat" class="calc-res r-gris"><span>⚪</span> Completar los indicadores para determinar el carácter estratégico del proyecto</div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:8px;">
+      <button class="btn" onclick="goPTab(0)">← Datos generales</button>
+      <button class="btn btn-fu" onclick="goPTab(2)">Siguiente: Beneficios adicionales →</button>
+    </div>
+  </div>
+
+  <!-- TAB C: ADICIONALES -->
+  <div class="ptc" id="ptc2">
+    <div style="background:var(--fu-lt);border:1px solid #EBACE0;border-radius:7px;padding:9px 13px;margin-bottom:1rem;">
+      <strong style="color:var(--fu-dk);font-size:12px;">Beneficios adicionales — art. 15° Ley 15.510</strong>
+      <p style="font-size:11px;color:var(--gr);margin-top:3px;">Cada condición verificada agrega años y porcentaje de exención al beneficio base. Documentación obligatoria al momento de la presentación inicial (art. 4° Reglamento Operativo).</p>
+    </div>
+
+    <!-- A13 -->
+    <div class="ind-card"><div class="ind-hdr add-hdr"><span class="ind-num add-num">A13</span><span class="ind-title add-title">Incremento de puestos de empleo — +2 años / +10%</span></div>
+    <div class="ind-body">
+      <div class="ind-def">Mismo cálculo que F2. Variación porcentual entre empleo directo en operación y dotación actual permanente. Umbrales por nivel de inversión: <strong>N1 (USD 5–50M): ≥8% · N2 (USD 50–200M): ≥15% · N3 (&gt;USD 200M): ≥25%</strong>. Empleos directos registrados, sin reducción del personal existente.</div>
+      <div id="a13-res" class="calc-res r-gris"><span>⚪</span> Se calcula automáticamente con los datos de F2 (dotación actual y empleo en operación)</div>
+    </div></div>
+
+    <!-- A14 -->
+    <div class="ind-card"><div class="ind-hdr add-hdr"><span class="ind-num add-num">A14</span><span class="ind-title add-title">Localización — +2 años / +10%</span></div>
+    <div class="ind-body">
+      <div class="ind-def">Indicador categórico SÍ/NO. Condiciones excluyentes (basta con una): <strong>a)</strong> Partido de bajo desarrollo relativo — PBG-PBA ≤0,5%, Anexo III Dec. 2731/2025. <strong>b)</strong> Parque industrial habilitado — Ley 13.744.</div>
+      <div class="fg" style="margin-bottom:8px;">
+        <div class="fgrp"><label class="flbl">Municipio de BDR (automático según selección en A)</label>
+          <div id="a14-bdr" style="font-size:12px;color:var(--gr);padding:6px 0;border-bottom:1px solid var(--gr-mid);">— seleccionar municipio en Datos generales</div></div>
+        <div class="fgrp"><label class="flbl">¿Ubicado en parque industrial habilitado (Ley 13.744)?</label>
+          <select class="fs" id="a14-parque" onchange="calcA14()"><option value="">...</option><option value="Si">Sí</option><option value="No">No</option></select></div>
+      </div>
+      <div id="a14-res" class="calc-res r-gris"><span>⚪</span> Seleccionar municipio y/o parque industrial</div>
+    </div></div>
+
+    <!-- A15 -->
+    <div class="ind-card"><div class="ind-hdr add-hdr"><span class="ind-num add-num">A15</span><span class="ind-title add-title">Sustitución de importaciones — +2 años / +10%</span></div>
+    <div class="ind-body">
+      <div class="ind-def">Aplica solo si F6-B es "Sí". Índice = Incidencia del componente importado histórica / Incidencia proyectada. <strong>&gt;1: sustitución verificada · =1: sin cambio · &lt;1: empeoró</strong>. Form. II 3.f "Programa de Sustitución de Importaciones".</div>
+      <div class="sub-lbl">Situación histórica — promedio 3 últimos años de operación</div>
+      <div class="fg4" style="margin-bottom:8px;">
+        <div class="fgrp"><label class="flbl">Importaciones FOB promedio 3 años (USD)</label><input class="fi" id="a15-fob-h" type="number" min="0" placeholder="0" oninput="calcA15()"></div>
+        <div class="fgrp"><label class="flbl">Cantidades vendidas promedio 3 años (unidades)</label><input class="fi" id="a15-cant-h" type="number" min="0" placeholder="0" oninput="calcA15()"></div>
+        <div class="fgrp"><label class="flbl">Precio en pesos promedio 3 años ($/unidad)</label><input class="fi" id="a15-ppesos-h" type="number" min="0" placeholder="0" oninput="calcA15()"></div>
+        <div class="fgrp"><label class="flbl">Tipo de cambio promedio 3 años ($/USD)</label><input class="fi" id="a15-tc-h" type="number" min="0" placeholder="0" oninput="calcA15()"></div>
+      </div>
+      <div id="a15-calc-h" class="info" style="display:none;margin-bottom:8px;"></div>
+      <div class="sub-lbl">Proyección — promedio 3 primeros años del proyecto</div>
+      <div class="fg3" style="margin-bottom:8px;">
+        <div class="fgrp"><label class="flbl">Importaciones FOB esperadas promedio Años 1-3 (USD)</label><input class="fi" id="a15-fob-p" type="number" min="0" placeholder="0" oninput="calcA15()"></div>
+        <div class="fgrp"><label class="flbl">Cantidades producidas proyectadas promedio Años 1-3 (unidades)</label><input class="fi" id="a15-cant-p" type="number" min="0" placeholder="0" oninput="calcA15()"></div>
+        <div class="fgrp"><label class="flbl">Precio de venta promedio (USD/unidad) <span class="note">— mismo "d)" que histórico</span></label><input class="fi" id="a15-pusd-p" type="number" min="0" step="0.01" placeholder="0.00" oninput="calcA15()"></div>
+      </div>
+      <div id="a15-calc-p" class="info" style="display:none;margin-bottom:8px;"></div>
+      <div id="a15-res" class="calc-res r-gris"><span>⚪</span> Completar todos los campos para calcular el índice</div>
+    </div></div>
+
+    <!-- A16 -->
+    <div class="ind-card"><div class="ind-hdr add-hdr"><span class="ind-num add-num">A16</span><span class="ind-title add-title">Innovación tecnológica — +2 años / +10%</span></div>
+    <div class="ind-body">
+      <div class="ind-def">8 sub-criterios del Dec. 2731/2025, art. 15° (Form. II 3.h "Proyección"). Excluye mera incorporación de tecnología "llave en mano". Mínimo 2 criterios verificados.</div>
+      <div class="cg" style="margin-bottom:8px;">
+        <label class="co"><input type="checkbox" id="i1" onchange="calcA16()"> <strong>1.</strong> ¿Es un producto/servicio innovador? (Form. II 3.h "Proyección" punto 3 — nuevo producto; mejora significativa de producto existente)</label>
+        <label class="co"><input type="checkbox" id="i2" onchange="calcA16()"> <strong>2.</strong> ¿Las especificaciones técnicas, componentes, materiales, etc. difieren de los existentes en el mercado? (Form. II 3.h "Proyección" punto 3)</label>
+        <label class="co"><input type="checkbox" id="i3" onchange="calcA16()"> <strong>3.</strong> ¿Implica tecnología nueva o combinación de existentes? (Form. II 3.h "Proyección" puntos 2 y 4)</label>
+        <label class="co"><input type="checkbox" id="i4" onchange="calcA16()"> <strong>4.</strong> ¿Implica generación de nuevo conocimiento? (Form. II 3.h "Proyección" punto 9 — patentes de invención y derechos de autor)</label>
+        <label class="co"><input type="checkbox" id="i5" onchange="calcA16()"> <strong>5.</strong> ¿Es una innovación de proceso inexistente en el mercado previamente? (Form. II 3.h "Proyección" punto 3 — nuevo proceso; mejora significativa de proceso existente)</label>
+        <label class="co"><input type="checkbox" id="i6" onchange="calcA16()"> <strong>6.</strong> ¿La innovación de proceso/s permite producir bienes tecnológicamente nuevos o mejorados? (Form. II 3.h "Proyección" puntos 2 y 4)</label>
+        <label class="co"><input type="checkbox" id="i7" onchange="calcA16()"> <strong>7.</strong> ¿La innovación de proceso mejora la eficiencia de la producción? (Form. II 3.h "Proyección" punto 7 — menor tiempo de producción)</label>
+        <label class="co"><input type="checkbox" id="i8" onchange="calcA16()"> <strong>8.</strong> Si se incorporó tecnología importada, ¿implica esfuerzos de adaptación o mejoras significativas? (Form. II 3.h "Proyección" punto 2)</label>
+      </div>
+      <div id="a16-res" class="calc-res r-gris"><span>⚪</span> Marcar criterios según documentación presentada</div>
+      <div class="nota">La mera incorporación de tecnología "llave en mano" disponible comercialmente no califica (Dec. 2731/2025, art. 15° inc. 4).</div>
+    </div></div>
+
+    <!-- A17 -->
+    <div class="ind-card"><div class="ind-hdr add-hdr"><span class="ind-num add-num">A17</span><span class="ind-title add-title">Incremento de exportaciones — +1 año / +5%</span></div>
+    <div class="ind-body">
+      <div class="ind-def">Form. II 3.g "Programa de Incremental Exportador". Dos sub-indicadores que deben verificarse en conjunto.</div>
+      <div class="sub-lbl">17.a) Incremento BRUTO — diferencia exportaciones promedio 3 primeros años vs. situación inicial (Form. II 3.g punto 2)</div>
+      <div class="info" style="margin-bottom:8px;">Umbrales: <strong>N1 (USD 5–50M): ≥20% · N2 (USD 50–200M): ≥15% · N3 (&gt;USD 200M): ≥10%</strong></div>
+      <div class="fg4" style="margin-bottom:8px;">
+        <div class="fgrp"><label class="flbl">Exportaciones situación inicial (USD FOB)</label><input class="fi" id="a17-ini" type="number" min="0" placeholder="0" oninput="calcA17()"></div>
+        <div class="fgrp"><label class="flbl">Exportaciones proyectadas Año 1 (USD FOB)</label><input class="fi" id="a17-a1" type="number" min="0" placeholder="0" oninput="calcA17()"></div>
+        <div class="fgrp"><label class="flbl">Exportaciones proyectadas Año 2 (USD FOB)</label><input class="fi" id="a17-a2" type="number" min="0" placeholder="0" oninput="calcA17()"></div>
+        <div class="fgrp"><label class="flbl">Exportaciones proyectadas Año 3 (USD FOB)</label><input class="fi" id="a17-a3" type="number" min="0" placeholder="0" oninput="calcA17()"></div>
+      </div>
+      <div id="a17a-res" class="calc-res r-gris"><span>⚪</span> Completar exportaciones iniciales y proyectadas</div>
+      <div class="sub-lbl" style="margin-top:12px;">17.b) Incremento NETO — que el incremento exportador no disminuya la oferta en el mercado interno (Form. II 3.g punto 2)</div>
+      <div class="fg4" style="margin-bottom:8px;">
+        <div class="fgrp"><label class="flbl">Producción total inicial (unidades)</label><input class="fi" id="a17-prod-ini" type="number" min="0" placeholder="0" oninput="calcA17()"></div>
+        <div class="fgrp"><label class="flbl">Producción total proyectada Año 1 (unidades)</label><input class="fi" id="a17-prod-a1" type="number" min="0" placeholder="0" oninput="calcA17()"></div>
+        <div class="fgrp"><label class="flbl">Mercado interno inicial (unidades)</label><input class="fi" id="a17-mi-ini" type="number" min="0" placeholder="0" oninput="calcA17()"></div>
+        <div class="fgrp"><label class="flbl">Mercado interno proyectado Año 1 (unidades)</label><input class="fi" id="a17-mi-a1" type="number" min="0" placeholder="0" oninput="calcA17()"></div>
+      </div>
+      <div id="a17b-res" class="calc-res r-gris"><span>⚪</span> Completar datos de producción y mercado interno</div>
+    </div></div>
+
+    <!-- A18 -->
+    <div class="ind-card"><div class="ind-hdr add-hdr"><span class="ind-num add-num">A18/19</span><span class="ind-title add-title">Política de género — +1 año / +5%</span></div>
+    <div class="ind-body">
+      <div class="ind-def">Plan de acciones orientado a reducir brechas de desigualdad de género en el ámbito laboral y empresarial (Dec. 2731/2025, art. 15°). Umbrales por nivel — <strong>N1: ≥1 estrategia · N2: ≥2 estrategias · N3: ≥3 estrategias</strong>. <em>Nota: umbrales son criterio propio de la AA, no surgen literalmente de la norma.</em></div>
+      <div class="fgrp" style="margin-bottom:8px;max-width:300px;"><label class="flbl">¿Presenta Plan de Equidad de Género?</label>
+        <select class="fs" id="a18-plan" onchange="togGen();calcA18()"><option value="">...</option><option value="Si">Sí</option><option value="No">No</option></select></div>
+      <div id="a18-est" style="display:none;">
+        <div class="cg" style="margin-bottom:8px;">
+          <label class="co"><input type="checkbox" class="gc" onchange="calcA18()"> <strong>1.</strong> Porcentaje de brecha de género</label>
+          <label class="co"><input type="checkbox" class="gc" onchange="calcA18()"> <strong>2.</strong> Porcentaje de brecha salarial</label>
+          <label class="co"><input type="checkbox" class="gc" onchange="calcA18()"> <strong>3.</strong> Cupo travesti/trans/transgénero</label>
+          <label class="co"><input type="checkbox" class="gc" onchange="calcA18()"> <strong>4.</strong> Mujeres y personas LGBTIQ+ en áreas masculinizadas</label>
+          <label class="co"><input type="checkbox" class="gc" onchange="calcA18()"> <strong>5.</strong> Comunicación institucional con perspectiva de género</label>
+          <label class="co"><input type="checkbox" class="gc" onchange="calcA18()"> <strong>6.</strong> Evaluación institucional con perspectiva de género</label>
+          <label class="co"><input type="checkbox" class="gc" onchange="calcA18()"> <strong>7.</strong> Capacitaciones en género y diversidad sexual</label>
+          <label class="co"><input type="checkbox" class="gc" onchange="calcA18()"> <strong>8.</strong> Protocolo para eliminación de violencias por motivos de género</label>
+          <label class="co"><input type="checkbox" class="gc" onchange="calcA18()"> <strong>9.</strong> Licencias por motivos de género</label>
+          <label class="co"><input type="checkbox" class="gc" onchange="calcA18()"> <strong>10.</strong> Acciones de difusión para prevención de violencias en el ámbito laboral</label>
+          <label class="co"><input type="checkbox" class="gc" onchange="calcA18()"> <strong>11.</strong> Esquemas de trabajo compatibles con los cuidados</label>
+          <label class="co"><input type="checkbox" class="gc" onchange="calcA18()"> <strong>12.</strong> Espacios propios para lactancia</label>
+          <label class="co"><input type="checkbox" class="gc" onchange="calcA18()"> <strong>13.</strong> Política menstrual</label>
+          <label class="co"><input type="checkbox" class="gc" onchange="calcA18()"> <strong>14.</strong> Otro (describir brevemente)</label>
+        </div>
+        <div class="fgrp"><label class="flbl">Espacio libre — datos adicionales / descripción de acciones</label><textarea class="fta" id="a18-obs" placeholder="Indicadores cuantificables, plazos de cumplimiento, descripción de acciones específicas..."></textarea></div>
+      </div>
+      <div id="a18-res" class="calc-res r-gris"><span>⚪</span> Indicar si presenta Plan de Equidad de Género</div>
+    </div></div>
+
+    <!-- A20 -->
+    <div class="ind-card"><div class="ind-hdr add-hdr"><span class="ind-num add-num">A20/21</span><span class="ind-title add-title">Sostenibilidad ambiental — +1 año / +5%</span></div>
+    <div class="ind-body">
+      <div class="ind-def">Plan de acciones para eficiencia energética, tecnologías limpias, energías renovables, uso eficiente de recursos naturales y preservación de biodiversidad (Dec. 2731/2025, art. 15°). Umbrales: <strong>N1: ≥1 acción · N2: ≥2 acciones · N3: ≥3 acciones</strong>. <em>Nota: umbrales son criterio propio de la AA.</em></div>
+      <div class="fgrp" style="margin-bottom:8px;max-width:300px;"><label class="flbl">¿Presenta Plan de Sostenibilidad Ambiental?</label>
+        <select class="fs" id="a20-plan" onchange="togAmb();calcA20()"><option value="">...</option><option value="Si">Sí</option><option value="No">No</option></select></div>
+      <div id="a20-est" style="display:none;">
+        <div class="cg" style="margin-bottom:8px;">
+          <label class="co"><input type="checkbox" class="ac" onchange="calcA20()"> <strong>1.</strong> Porcentaje de energía renovable por unidad productiva (y tipo)</label>
+          <label class="co"><input type="checkbox" class="ac" onchange="calcA20()"> <strong>2.</strong> Porcentaje de residuos reutilizados</label>
+          <label class="co"><input type="checkbox" class="ac" onchange="calcA20()"> <strong>3.</strong> Porcentaje de aguas residuales tratadas</label>
+          <label class="co"><input type="checkbox" class="ac" onchange="calcA20()"> <strong>4.</strong> Reducción de GEI cuantificada</label>
+          <label class="co"><input type="checkbox" class="ac" onchange="calcA20()"> <strong>5.</strong> Acciones de difusión en materia de sostenibilidad ambiental</label>
+          <label class="co"><input type="checkbox" class="ac" onchange="calcA20()"> <strong>6.</strong> Capacitaciones orientadas a la sostenibilidad ambiental</label>
+          <label class="co"><input type="checkbox" class="ac" onchange="calcA20()"> <strong>7.</strong> Certificación empresa de impacto B</label>
+          <label class="co"><input type="checkbox" class="ac" onchange="calcA20()"> <strong>8.</strong> Protección de la biodiversidad</label>
+          <label class="co"><input type="checkbox" class="ac" onchange="calcA20()"> <strong>9.</strong> Captación de aguas pluviales</label>
+          <label class="co"><input type="checkbox" class="ac" onchange="calcA20()"> <strong>10.</strong> Promoción del transporte sustentable</label>
+          <label class="co"><input type="checkbox" class="ac" onchange="calcA20()"> <strong>11.</strong> Otro (describir brevemente)</label>
+        </div>
+        <div class="fgrp"><label class="flbl">Espacio libre — datos adicionales / descripción de acciones</label><textarea class="fta" id="a20-obs" placeholder="Indicadores cuantificables, plazos de cumplimiento, descripción de acciones específicas..."></textarea></div>
+      </div>
+      <div id="a20-res" class="calc-res r-gris"><span>⚪</span> Indicar si presenta Plan de Sostenibilidad Ambiental</div>
+    </div></div>
+
+    <div style="display:flex;justify-content:space-between;margin-top:8px;">
+      <button class="btn" onclick="goPTab(1)">← Finalidades</button>
+      <button class="btn btn-fu" onclick="goPTab(3)">Siguiente: Observaciones →</button>
+    </div>
+  </div>
+
+  <!-- TAB D: OBSERVACIONES -->
+  <div class="ptc" id="ptc3">
+    <div class="ind-card">
+      <div class="sec-hdr sec-ce" style="border-radius:0;">D. Observaciones del evaluador</div>
+      <div class="ind-body">
+        <div class="fgrp" style="margin-bottom:10px;"><label class="flbl">Observaciones generales del proyecto</label>
+          <textarea class="fta" id="obs-gral" style="min-height:90px;" placeholder="Aspectos relevantes no contemplados en los campos anteriores, aclaraciones sobre la documentación presentada, alertas para el evaluador..."></textarea></div>
+        <div class="fgrp" style="margin-bottom:10px;"><label class="flbl">Condicionamientos y documentación pendiente</label>
+          <textarea class="fta" id="obs-cond" style="min-height:70px;" placeholder="Documentación pendiente, incumplimientos parciales, plazos de subsanación..."></textarea></div>
+        <div class="fgrp"><label class="flbl">Observaciones sobre condiciones adicionales</label>
+          <textarea class="fta" id="obs-adic" style="min-height:70px;" placeholder="Condicionamientos específicos sobre los beneficios adicionales solicitados..."></textarea></div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:8px;">
+      <button class="btn" onclick="goPTab(2)">← Adicionales</button>
+      <button class="btn btn-az" onclick="goPTab(4)">Ver cálculo de beneficios →</button>
+    </div>
+  </div>
+
+  <!-- TAB E: CÁLCULO -->
+  <div class="ptc" id="ptc4">
+    <div id="ben-cont"><div class="calc-res r-gris"><span>⚪</span> Completar monto de inversión en "Datos generales" para activar el cálculo.</div></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--gr-mid);">
+      <button class="btn" onclick="resetForm()">↺ Limpiar formulario</button>
+      <button class="btn btn-fu" id="btn-guardar" onclick="guardar()">✓ Guardar proyecto</button>
+    </div>
+  </div>
+
+  <!-- TAB F: TABLAS -->
+  <div class="ptc" id="ptc5">
+    <div class="card">
+      <div class="ctitle">Tabla de empleo por rama — OEDE/SIPA (1° Trimestre 2025)</div>
+      <div class="info" style="margin-bottom:8px;">Fuente: STEySS / OEDE, base SIPA. Empleo total PBA: <strong>2.145.824 puestos</strong>. Actualizar cuando se publiquen nuevos datos trimestrales.</div>
+      <input class="search-inp" id="tbl-emp-search" placeholder="Buscar rama de actividad..." oninput="filtEmpTbl()">
+      <div style="overflow-x:auto;max-height:380px;overflow-y:auto;">
+        <table class="data-tbl"><thead><tr>
+          <th>Cód.</th><th>Rama de actividad</th><th>% PBA</th><th>Total PBA</th>
+          <th class="az">Umbral Dir. N1</th><th class="az">Umbral Dir. N2</th><th class="az">Umbral Dir. N3</th>
+          <th class="fu">Umbral Tot. N1</th><th class="fu">Umbral Tot. N2</th><th class="fu">Umbral Tot. N3</th>
+        </tr></thead><tbody id="tbl-emp-body"></tbody></table>
+      </div>
+      <div class="nota" style="margin-top:8px;">N1=USD 5–50M · N2=USD 50–200M · N3=&gt;USD 200M. El umbral es el valor mínimo del indicador (empleos/total_rama × 100.000) para considerar que el proyecto contribuye a la finalidad de empleo.</div>
+    </div>
+    <div class="card">
+      <div class="ctitle">Tabla de exportaciones PBA por rubro (2020–2024)</div>
+      <div class="info" style="margin-bottom:8px;">Fuente: INDEC / Dirección Provincial de Estadística. Millones USD FOB. Total sectores RPIE 2024: <strong>USD 23.962M</strong>. Actualizar cuando estén disponibles datos 2025.</div>
+      <input class="search-inp" id="tbl-exp-search" placeholder="Buscar rubro..." oninput="filtExpTbl()">
+      <div style="overflow-x:auto;max-height:380px;overflow-y:auto;">
+        <table class="data-tbl"><thead><tr>
+          <th>Rubro</th><th class="az">2020</th><th class="az">2021</th><th class="az">2022</th><th class="az">2023</th><th class="az">2024</th><th class="ve">% sobre total RPIE 2024</th>
+        </tr></thead><tbody id="tbl-exp-body"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROYECTOS -->
+<div class="panel" id="panel-proyectos">
+  <div class="ptitle">Lista de proyectos</div><div class="psub" id="proj-sub">—</div>
+  <div class="ptable">
+    <div class="prow phdr"><span>Empresa / Proyecto</span><span>Municipio</span><span>Sector</span><span>Inversión</span><span>Estado / Beneficio</span><span></span></div>
+    <div id="proj-body"><div style="padding:16px;text-align:center;font-size:11px;color:var(--gr);">Sin proyectos cargados.</div></div>
+  </div>
+</div>
+
+<!-- CRITERIOS -->
+<div class="panel" id="panel-criterios">
+  <div class="ptitle">Criterios normativos y matriz de indicadores</div>
+  <div class="psub">Ley 15.510 · Decreto Reglamentario 2731/2025 · Reglamento Operativo.</div>
+  <div class="ctab-bar">
+    <button class="ctab active" onclick="showCrit('fin',this)">Finalidades (art. 2°)</button>
+    <button class="ctab" onclick="showCrit('ben',this)">Beneficios adicionales (art. 15°)</button>
+    <button class="ctab" onclick="showCrit('tabla',this)">Tabla de beneficios</button>
+    <button class="ctab" onclick="showCrit('notas',this)">Notas metodológicas</button>
+  </div>
+  <div class="cpanel active" id="cp-fin"><div id="crit-fin-c"></div></div>
+  <div class="cpanel" id="cp-ben"><div id="crit-ben-c"></div></div>
+  <div class="cpanel" id="cp-tabla">
+    <div class="card"><div class="ctitle">Beneficio base por tramo de inversión</div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr>
+        <th style="background:var(--az);color:#fff;padding:6px 9px;">Tramo</th>
+        <th style="background:var(--az);color:#fff;padding:6px 9px;text-align:center;">Años base</th>
+        <th style="background:var(--az);color:#fff;padding:6px 9px;text-align:center;">% Exención</th>
+        <th style="background:var(--az);color:#fff;padding:6px 9px;text-align:center;">Máx. años</th>
+        <th style="background:var(--az);color:#fff;padding:6px 9px;text-align:center;">Máx. %</th>
+      </tr></thead><tbody>
+        <tr><td style="padding:6px 9px;border-bottom:1px solid var(--gr-mid);">USD 5M – 50M</td><td style="padding:6px 9px;text-align:center;border-bottom:1px solid var(--gr-mid);">5</td><td style="padding:6px 9px;text-align:center;border-bottom:1px solid var(--gr-mid);">30%</td><td style="padding:6px 9px;text-align:center;border-bottom:1px solid var(--gr-mid);">15</td><td style="padding:6px 9px;text-align:center;border-bottom:1px solid var(--gr-mid);">65%</td></tr>
+        <tr><td style="padding:6px 9px;border-bottom:1px solid var(--gr-mid);">USD 50M – 200M</td><td style="padding:6px 9px;text-align:center;border-bottom:1px solid var(--gr-mid);">4</td><td style="padding:6px 9px;text-align:center;border-bottom:1px solid var(--gr-mid);">25%</td><td style="padding:6px 9px;text-align:center;border-bottom:1px solid var(--gr-mid);">14</td><td style="padding:6px 9px;text-align:center;border-bottom:1px solid var(--gr-mid);">60%</td></tr>
+        <tr><td style="padding:6px 9px;">USD &gt; 200M</td><td style="padding:6px 9px;text-align:center;">3</td><td style="padding:6px 9px;text-align:center;">20%</td><td style="padding:6px 9px;text-align:center;">13</td><td style="padding:6px 9px;text-align:center;">55%</td></tr>
+      </tbody></table></div>
+    <div class="card"><div class="ctitle">Condiciones adicionales</div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr>
+        <th style="background:var(--fu);color:#fff;padding:6px 9px;">Condición</th>
+        <th style="background:var(--fu);color:#fff;padding:6px 9px;text-align:center;">+Años</th>
+        <th style="background:var(--fu);color:#fff;padding:6px 9px;text-align:center;">+Exención</th>
+      </tr></thead><tbody id="tbl-adic-crit"></tbody></table></div>
+  </div>
+  <div class="cpanel" id="cp-notas">
+    <div class="card"><div class="ctitle">⚠️ Notas metodológicas</div>
+      <div style="font-size:11px;color:var(--gr);line-height:1.7;">
+        <p style="margin-bottom:9px;"><strong style="color:var(--az-dk);">Ind. 12 — Nuevo sector productivo:</strong> la definición conceptual refiere al nivel provincial pero la operacional evalúa a nivel municipal. Pendiente de resolución por la AA.</p>
+        <p style="margin-bottom:9px;"><strong style="color:var(--az-dk);">Ind. F7 — Variable "Municipio de bajo desarrollo":</strong> el IDTE usa el criterio de actividades primarias ≥15% de establecimientos (CEP XXI), que es <em>distinto</em> del listado de 92 partidos BDR del Anexo III (Dec. 2731/2025). Ambos coexisten con finalidades diferentes.</p>
+        <p style="margin-bottom:9px;"><strong style="color:var(--az-dk);">Ind. A18/19 y A20/21 — Umbrales de estrategias:</strong> los umbrales de cantidad mínima (1/2/3 por nivel) son <em>criterio propio de la AA</em>, no surgen literalmente de la ley ni del decreto. El decreto exige solo "un plan de acciones". Debe explicitarse en los actos administrativos.</p>
+        <p><strong style="color:var(--az-dk);">Ind. F4 vs. A16 — Innovación:</strong> F4 evalúa el esfuerzo presupuestario en I+D (finalidad general). A16 aplica el estándar estricto del decreto (sub-criterios de producto/proceso). La diferencia de rigor está justificada por el enfoque dual de la matriz.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NORMATIVA -->
+<div class="panel" id="panel-normativa">
+  <div class="ptitle">Normativa del régimen</div>
+  <div class="psub">Prelación: Ley 15.510 → Decreto Reglamentario 2731/2025 → Reglamento Operativo. Clic en cada artículo para expandir.</div>
+  <div id="norm-content"></div>
+</div>
+
+<!-- EXPORTAR -->
+<div class="panel" id="panel-exportar">
+  <div class="ptitle">Exportar datos</div><div class="psub">Todos los formatos incluyen datos completos: proyectos, indicadores y beneficios calculados.</div>
+  <div class="card"><div class="ctitle">Exportación completa</div>
+    <div class="er"><button class="btn btn-az" onclick="expCSV()">📄 CSV</button><button class="btn" onclick="expJSON()">{ } JSON</button><button class="btn" onclick="expTXT()">📝 Resumen ejecutivo (TXT)</button></div></div>
+  <div class="card"><div class="ctitle">Google Sheets — respaldo automático</div>
+    <p style="font-size:11px;color:var(--gr);margin-bottom:9px;">Se actualiza al guardar cada proyecto.</p>
+    <div class="er">
+      <button class="btn" onclick="syncS()">↻ Sincronizar</button>
+      <a class="btn btn-ce" href="https://docs.google.com/spreadsheets/d/1TtgsIu4LslFY_sNUT-fFb0xlZ83kn5LdP4unkax9dDM/edit" target="_blank">↗ Abrir Sheets</a>
+    </div>
+    <div id="sync-st" style="font-size:10px;color:var(--gr);margin-top:7px;"></div></div>
+  <div class="card"><div class="ctitle">Reporte para presentación</div><button class="btn" onclick="window.print()">🖨️ Imprimir / PDF</button></div>
+</div>
+
+</main>
+</div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)cerrarModalBtn()">
+  <div class="modal" id="modal-box">
+    <div class="modal-hdr">
+      <span class="modal-hdr-title" id="modal-title">Proyecto</span>
+      <button class="modal-close" onclick="cerrarModalBtn()">&#10005;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="cerrarModalBtn()">Cerrar</button>
+      <button class="btn" style="background:var(--ce);color:#fff;border-color:var(--ce);" onclick="editarEnFormulario(_modalProjId)">&#9998; Abrir en formulario</button>
+      <button class="btn btn-fu" onclick="guardarDesdeModal()">&#10003; Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="toast-msg"></span></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script>
+const SIDERSA_PRELOAD = [{"id": 1750000000001, "cuit": "30719060168", "razon": "RIGI - SIDERSA ACERIA SDE", "nombre": "Proyecto Sidersa+", "municipio": "San Nicolás", "estado": "evaluacion", "sector": "01. Industria manufacturera", "tipo": "Planta nueva", "monto": 286277191, "inicio": "2025-05-30", "naibb": "241001", "partida": "098-75014", "afI": 100, "afB": 100, "empDir": 268, "empInd": 3500, "empAct": 0, "f2rama": "27", "f3prov": "", "f3pct": 0, "a17ini": 0, "a17a1": 0, "a17a2": 750000, "a17a3": 750000, "bdr": false, "parque": "", "finalidades": {}, "adicionales": {"a13": null, "a14": false, "a15": null, "a16": null, "a17": null, "a18": null, "a20": null}, "beneficio": {"anos": 3, "pct": 20, "pctInm": 20.0, "pctIIBB": 20.0}, "obs": "Sucursal Dedicada Especial — Ley 27.742 (RIGI Nacional — Res. 1028/2025). CAPEX: USD 286.277.191. TC: $1188 BNA venta 30/05/2025. Inicio proyecto: 30/05/2025. Inicio operaciones: 01/10/2027. Sup. a construir: 26.021 m². Domicilio: Estanislao del Campo 0, entre Mendoza y Colectora Ruta 9, San Nicolás. Partidas: 098-75014 / 098-21183 / 098-09104 / 098-60347. Inmueble no propio.", "obsCond": "PENDIENTE: dotación actual (F931 ARCA), indicadores F2-F8 y A13-A20. ALERTA: plazo presentación 6 meses desde inicio proyecto (30/05/2025) — vence 30/11/2025, verificar cumplimiento Art. 2° Reglamento Operativo. CUIT 30719060168: verificar dualidad con empresa madre. Documentación RIGI Nacional no sustituye a RPIE Provincial.", "obsAdic": "Localización A14: San Nicolás NO es BDR (Anexo III). Condiciones solicitadas en formulario: empleo, sust. importaciones, innovación, exportaciones, género, ambiental. Exportaciones proyectadas: USD 0 Año 1, USD 750.000 Años 2 y 3.", "fechaCarga": "2026-06-23T00:00:00.000Z"}, {"id": 1750000000002, "cuit": "30537869158", "razon": "FRIGORIFICO GORINA S A I C", "nombre": "NUEVA DESPOSTADA", "municipio": "La Plata", "estado": "evaluacion", "sector": "01. Industria manufacturera", "tipo": "Planta nueva", "monto": 31645293, "inicio": "2025-07-05", "naibb": "101012", "partida": "055-078841-1", "afI": 100, "afB": 100, "empDir": 650, "empInd": 1900, "empAct": 576, "f2rama": "", "f3prov": "", "f3pct": 0, "a17ini": 0, "a17a1": 0, "a17a2": 0, "a17a3": 0, "bdr": false, "parque": "", "finalidades": {}, "adicionales": {"a13": null, "a14": false, "a15": false, "a16": null, "a17": null, "a18": null, "a20": null}, "beneficio": {"anos": 5, "pct": 30, "pctInm": 30.0, "pctIIBB": 30.0}, "obs": "Razón social: FRIGORIFICO GORINA S A I C. CUIT: 30537869158. Forma jurídica: S.A.I.C. Año constitución: 1961. Inscripción N° 236979 (IGJ). NAIBB principal: 101012 (Procesamiento de carne de ganado bovino). Actividades actuales: 101011, 101012, 472130. TC utilizado: $1380 (BNA, 15/04/2026). Monto total inversión: USD 31.645.293. Financiamiento: aportes de capital USD 9.897.841 + fondos autogenerados USD 21.747.452. Inversión Año 1: USD 17.449.988 (1° sem.) + USD 14.195.305 (2° sem.). Solo 2 años de inversión. Fecha inicio proyecto: 05/07/2025. Fecha inicio operaciones: 05/07/2026. Superficie actual edificada: 25.493 m². Superficie a construir: 13.370 m². Inmueble propio: Sí. Partida: 055-078841-1. No emplazado en agrupamiento industrial. Domicilio: Calle 501 s/n, La Plata. Motivación: reconstrucción y modernización de sectores productivos afectados por incendio del 17/02/2025. Activo fijo libros (moneda constante): ARS 6.533.635.978 = USD 6.100.500 (TC $1071, 31/03/2025). Dotación actual (F931 ARCA): 576 permanentes (14 directivos, 282 prod., 118 adm., 53 mto., 4 I+D, 105 otros). Empleo proyectado operación: 650 directos permanentes + 350 temporarios + 1900 indirectos. Capacidad producción proyectada: 70.800.000 kg/año (Años 1–5). Aprovechamiento: 99,9%. Exportaciones históricas: 73,5% ventas totales (ejercicio más reciente). Ventas ME proyectadas Año 1: 373.560.727 kg. Certificaciones vigentes: SENASA, RUCA, Municipal La Plata, BRCGS Issue 9, HACCP, Bienestar Animal, Halal, SMETA 4P, Angus, Kosher.", "obsCond": "PENDIENTE COMPLETAR: indicadores F2–F8, A13, A16–A18, A20. ALERTA PLAZO: inicio proyecto declarado 05/07/2025 — verificar fecha presentación solicitud vs. Art. 2° RO (6 meses = vence 05/01/2026). Condiciones adicionales solicitadas en formulario: empleo ✓, innovación tecnológica ✓, exportaciones ✓, género ✓, ambiental ✓. Sustitución de importaciones: NO solicitada. Localización BDR: NO solicitada. La Plata NO es partido BDR (Anexo III Dec. 2731/2025). Verificar encuadre tipo de proyecto: declarado 'Planta nueva' pero motivación es reconstrucción post-siniestro — analizar si corresponde ese encuadre o 'ampliación'. % inversión 40% en 3 años: toda la inversión se ejecuta en Año 1 (100%). Cumple. Estabilidad fiscal solicitada: no indicada en formulario cargado.", "obsAdic": "A14 Localización: La Plata NO es BDR. A15 Sustitución importaciones: NO solicitada. A17 Exportaciones: empresa con fuerte perfil exportador histórico (73,5% ventas). Exportaciones proyectadas Año 1 ME: ~373 M kg. Pendiente carga de valores FOB para cálculo. A18 Género: solicitada — pendiente plan. A20 Ambiental: solicitada — pendiente plan. A16 Innovación: solicitada — incorpora equipamiento de última generación (noqueadores neumáticos, desolladoras, envasadoras al vacío, detectores de metales). EBITDA proyectado Año 1: USD 25.0M. VAN/TIR: no informados en formulario.", "fechaCarga": "2026-06-28T00:00:00.000Z"}, {"id": 1750000000003, "cuit": "30718758552", "razon": "Fertil Pampa S.A.U.", "nombre": "Proyecto Fertilizantes", "municipio": "Bahía Blanca", "estado": "evaluacion", "sector": "01. Industria manufacturera", "tipo": "Planta nueva", "monto": 2400000000, "inicio": "2026-07-01", "naibb": "201300", "partida": "Parcelas afectadas Layout Pampa-CPB-Estacion de maniobras", "afI": 100, "afB": 100, "empDir": 300, "empInd": 700, "empAct": 0, "f2rama": "", "f3prov": "", "f3pct": 0, "a17ini": 0, "a17a1": 0, "a17a2": 888840000, "a17a3": 888960000, "bdr": false, "parque": "", "finalidades": {}, "adicionales": {"a13": null, "a14": null, "a15": null, "a16": null, "a17": null, "a18": null, "a20": null}, "beneficio": {"anos": 3, "pct": 20, "pctInm": 20.0, "pctIIBB": 20.0}, "obs": "Razón social: Fertil Pampa S.A.U. CUIT: 30718758552. Sociedad Anónima Unipersonal. Año constitución: 2024. Inscripción N° 21085, Libro 119 (IGJ CABA). Web: www.pampa.com. Empresa nueva sin actividad previa ni activo fijo. F931 ARCA: 0 empleados. NAIBB principal: 201300 (Fabricación de abonos y compuestos de nitrógeno). Producto: urea granulada (2.100.000 t/año) + amoníaco. Tecnología: KBR (amoníaco) + Stamicarbon ULE (urea). TC: $1459,42 BNA venta 31/12/2025. Monto total inversión: USD 2.400.000.000. Financiamiento: aportes de capital USD 1.000M + créditos bancarios exterior USD 1.400M. Cronograma inversión: Año 1: USD 614,4M | Año 2: USD 573,8M | Año 3: USD 600,6M | Año 4: USD 581M | Inversión acum. al Año 2: 85,6%. Ubicación: Puerto Ing. White, Bahía Blanca. Inmueble no propio (reserva de disponibilidad CPB, 13/01/2024). Superficie a construir: 660.000 m². Inicio proyecto: 01/07/2026. Inicio operaciones: 24/03/2030. Empleo construcción: 3.500 directos + 8.000 indirectos. Empleo operación: 300 directos permanentes + 1.000 temporarios + 700 indirectos. Capacidad producción: 2.100.000 t/año de urea (100% aprovechamiento). Exportaciones proyectadas desde 2030: USD 888,84M/año (Año 1) — USD 888,96M/año (Año 2). Sustitución importaciones acumulada vida útil: USD 11.380M. Estabilidad fiscal solicitada: 13 años.", "obsCond": "PENDIENTE: indicadores F2-F8, A13-A20. ALERTA PLAZO: inicio proyecto declarado 01/07/2026 — verificar fecha presentación solicitud vs. Art. 2° RO (6 meses). Inmueble no propio: acreditar instrumento de explotación exclusiva y que el pago del Impuesto Inmobiliario corra a cuenta de FP. Empresa sin antecedentes ni actividad previa: verificar cumplimiento Art. 4° Ley 15.510 (exclusiones). Partida inmobiliaria no individualizada numéricamente — pendiente ARBA. Estabilidad fiscal solicitada: 13 años — máximo legal según nivel N3. Condiciones adicionales solicitadas: empleo ✓, localización ✓ (verificar BDR), innovación ✓, exportaciones ✓, género ✓, ambiental ✓. Sustitución importaciones: NO marcada en formulario (verificar — la descripción del proyecto la menciona explícitamente).", "obsAdic": "A14 Localización: Bahía Blanca — verificar si es partido BDR (Anexo III Dec. 2731/2025). A15 Sustitución importaciones: NO marcada en formulario pero el proyecto describe sustitución explícita (~USD 11.380M vida útil) — analizar encuadre. A17 Exportaciones: USD 888,84M proyectados desde Año 1 de operaciones (2030). Verificar % sobre rama y total RPIE. A18 Género: solicitada, pendiente plan. A20 Ambiental: solicitada, pendiente plan. A16 Innovación: solicitada — tecnología KBR + Stamicarbon ULE, minimización emisiones CO₂. A13 Empleo: verificar umbral según monto N3 (>USD 200M). Flujo de divisas proyectado 2030: USD +878,5M neto.", "fechaCarga": "2026-06-28T00:00:00.000Z"}];
+
+// ══════════════════════════════════════════════
+// DATOS ESTÁTICOS
+// ══════════════════════════════════════════════
+const EMPLEO_DATA=[
+  {cod:"1",n:"Agricultura y ganadería",pct:0.0397,tot:85119,d1:11.7483,d2:23.4965,d3:35.2448,t1:23.4965,t2:35.2448,t3:46.993},
+  {cod:"2",n:"Silvicultura, extracción de madera",pct:0.0003,tot:722,d1:1385.0416,d2:2770.0831,d3:4155.1247,t1:2770.0831,t2:4155.1247,t3:5540.1662},
+  {cod:"5",n:"Pesca y actividades relacionadas",pct:0.0019,tot:4097,d1:244.081,d2:488.1621,d3:732.2431,t1:488.1621,t2:732.2431,t3:976.3241},
+  {cod:"15",n:"Alimentos",pct:0.0639,tot:137179,d1:7.2897,d2:14.5795,d3:21.8692,t1:14.5795,t2:21.8692,t3:29.159},
+  {cod:"16",n:"Tabaco",pct:0.0005,tot:1024,d1:976.5625,d2:1953.125,d3:2929.6875,t1:1953.125,t2:2929.6875,t3:3906.25},
+  {cod:"17",n:"Productos textiles",pct:0.0127,tot:27283,d1:36.6529,d2:73.3057,d3:109.9586,t1:73.3057,t2:109.9586,t3:146.6114},
+  {cod:"18",n:"Confecciones",pct:0.0069,tot:14767,d1:67.7186,d2:135.4371,d3:203.1557,t1:135.4371,t2:203.1557,t3:270.8742},
+  {cod:"19",n:"Calzado y cuero",pct:0.0058,tot:12349,d1:80.9782,d2:161.9564,d3:242.9347,t1:161.9564,t2:242.9347,t3:323.9129},
+  {cod:"20",n:"Madera",pct:0.0032,tot:6879,d1:145.37,d2:290.7399,d3:436.1099,t1:290.7399,t2:436.1099,t3:581.4799},
+  {cod:"21",n:"Papel",pct:0.0075,tot:16062,d1:62.2587,d2:124.5175,d3:186.7762,t1:124.5175,t2:186.7762,t3:249.035},
+  {cod:"22",n:"Edición",pct:0.0049,tot:10410,d1:96.0615,d2:192.123,d3:288.1844,t1:192.123,t2:288.1844,t3:384.2459},
+  {cod:"23",n:"Productos de petróleo",pct:0.001,tot:2074,d1:482.1601,d2:964.3202,d3:1446.4802,t1:964.3202,t2:1446.4802,t3:1928.6403},
+  {cod:"24",n:"Productos químicos",pct:0.0259,tot:55632,d1:17.9753,d2:35.9505,d3:53.9258,t1:35.9505,t2:53.9258,t3:71.901},
+  {cod:"25",n:"Productos de caucho y plástico",pct:0.019,tot:40717,d1:24.5598,d2:49.1195,d3:73.6793,t1:49.1195,t2:73.6793,t3:98.2391},
+  {cod:"26",n:"Minerales no metálicos",pct:0.0099,tot:21182,d1:47.2099,d2:94.4198,d3:141.6297,t1:94.4198,t2:141.6297,t3:188.8396},
+  {cod:"27",n:"Metales comunes",pct:0.0097,tot:20904,d1:47.8377,d2:95.6755,d3:143.5132,t1:95.6755,t2:143.5132,t3:191.351},
+  {cod:"28",n:"Otros productos de metal",pct:0.0224,tot:48161,d1:20.7637,d2:41.5274,d3:62.2911,t1:41.5274,t2:62.2911,t3:83.0548},
+  {cod:"29",n:"Maquinaria y equipo",pct:0.0123,tot:26439,d1:37.8229,d2:75.6458,d3:113.4687,t1:75.6458,t2:113.4687,t3:151.2917},
+  {cod:"30",n:"Maquinaria de oficina",pct:0.0005,tot:994,d1:1006.0362,d2:2012.0724,d3:3018.1087,t1:2012.0724,t2:3018.1087,t3:4024.1449},
+  {cod:"31",n:"Aparatos eléctricos",pct:0.0059,tot:12669,d1:78.9328,d2:157.8657,d3:236.7985,t1:157.8657,t2:236.7985,t3:315.7313},
+  {cod:"32",n:"Radio y televisión",pct:0.0006,tot:1214,d1:823.7232,d2:1647.4465,d3:2471.1697,t1:1647.4465,t2:2471.1697,t3:3294.8929},
+  {cod:"33",n:"Instrumentos médicos",pct:0.0015,tot:3161,d1:316.3556,d2:632.7112,d3:949.0668,t1:632.7112,t2:949.0668,t3:1265.4223},
+  {cod:"34",n:"Automotores",pct:0.0202,tot:43340,d1:23.0734,d2:46.1467,d3:69.2201,t1:46.1467,t2:69.2201,t3:92.2935},
+  {cod:"35",n:"Otros equipos de transporte",pct:0.0024,tot:5254,d1:190.3312,d2:380.6624,d3:570.9935,t1:380.6624,t2:570.9935,t3:761.3247},
+  {cod:"36",n:"Muebles",pct:0.008,tot:17148,d1:58.3158,d2:116.6317,d3:174.9475,t1:116.6317,t2:174.9475,t3:233.2633},
+  {cod:"37",n:"Reciclamiento de desperdicios",pct:0.0008,tot:1631,d1:613.1208,d2:1226.2416,d3:1839.3624,t1:1226.2416,t2:1839.3624,t3:2452.4831},
+  {cod:"40",n:"Electricidad, gas y agua",pct:0.0074,tot:15793,d1:63.3192,d2:126.6384,d3:189.9576,t1:126.6384,t2:189.9576,t3:253.2768},
+  {cod:"41",n:"Captación y distribución de agua",pct:0.0019,tot:4071,d1:245.6399,d2:491.2798,d3:736.9197,t1:491.2798,t2:736.9197,t3:982.5596},
+  {cod:"45",n:"Construcción",pct:0.0515,tot:110471,d1:9.0521,d2:18.1043,d3:27.1564,t1:18.1043,t2:27.1564,t3:36.2086},
+  {cod:"50",n:"Venta y reparación de vehículos",pct:0.0315,tot:67519,d1:14.8106,d2:29.6213,d3:44.4319,t1:29.6213,t2:44.4319,t3:59.2426},
+  {cod:"51",n:"Comercio al por mayor",pct:0.0636,tot:136486,d1:7.3268,d2:14.6535,d3:21.9803,t1:14.6535,t2:21.9803,t3:29.307},
+  {cod:"52",n:"Comercio al por menor",pct:0.1076,tot:230926,d1:4.3304,d2:8.6608,d3:12.9912,t1:8.6608,t2:12.9912,t3:17.3216},
+  {cod:"55",n:"Hotelería y restaurantes",pct:0.0457,tot:98088,d1:10.1949,d2:20.3899,d3:30.5848,t1:20.3899,t2:30.5848,t3:40.7797},
+  {cod:"60",n:"Transporte ferroviario y automotor",pct:0.0573,tot:122913,d1:8.1358,d2:16.2717,d3:24.4075,t1:16.2717,t2:24.4075,t3:32.5433},
+  {cod:"61",n:"Transporte marítimo y fluvial",pct:0.0008,tot:1741,d1:574.3825,d2:1148.7651,d3:1723.1476,t1:1148.7651,t2:1723.1476,t3:2297.5302},
+  {cod:"62",n:"Transporte aéreo",pct:0.0023,tot:4878,d1:205.0021,d2:410.0041,d3:615.0062,t1:410.0041,t2:615.0062,t3:820.0082},
+  {cod:"63",n:"Manipulación de carga y almacenamiento",pct:0.0215,tot:46209,d1:21.6408,d2:43.2816,d3:64.9224,t1:43.2816,t2:64.9224,t3:86.5632},
+  {cod:"64",n:"Telecomunicaciones y correos",pct:0.0099,tot:21311,d1:46.9241,d2:93.8482,d3:140.7724,t1:93.8482,t2:140.7724,t3:187.6965},
+  {cod:"65",n:"Intermediación financiera",pct:0.006,tot:12858,d1:77.7726,d2:155.5452,d3:233.3178,t1:155.5452,t2:233.3178,t3:311.0903},
+  {cod:"66",n:"Seguros",pct:0.0031,tot:6620,d1:151.0574,d2:302.1148,d3:453.1722,t1:302.1148,t2:453.1722,t3:604.2296},
+  {cod:"67",n:"Servicios auxiliares financieros",pct:0.0021,tot:4567,d1:218.9621,d2:437.9242,d3:656.8864,t1:437.9242,t2:656.8864,t3:875.8485},
+  {cod:"70",n:"Servicios inmobiliarios",pct:0.012,tot:25713,d1:38.8908,d2:77.7817,d3:116.6725,t1:77.7817,t2:116.6725,t3:155.5634},
+  {cod:"71",n:"Alquiler de equipos",pct:0.0014,tot:3005,d1:332.7787,d2:665.5574,d3:998.3361,t1:665.5574,t2:998.3361,t3:1331.1148},
+  {cod:"72",n:"Actividades de informática",pct:0.0095,tot:20320,d1:49.2126,d2:98.4252,d3:147.6378,t1:98.4252,t2:147.6378,t3:196.8504},
+  {cod:"73",n:"Investigación y desarrollo",pct:0.001,tot:2140,d1:467.2897,d2:934.5794,d3:1401.8692,t1:934.5794,t2:1401.8692,t3:1869.1589},
+  {cod:"74",n:"Servicios jurídicos, contables y a empresas",pct:0.0739,tot:158534,d1:6.3078,d2:12.6156,d3:18.9234,t1:12.6156,t2:18.9234,t3:25.2312},
+  {cod:"75",n:"Agencias de empleo eventual",pct:0.012,tot:25788,d1:38.7777,d2:77.5555,d3:116.3332,t1:77.5555,t2:116.3332,t3:155.111},
+  {cod:"80",n:"Enseñanza",pct:0.0854,tot:183271,d1:5.4564,d2:10.9128,d3:16.3692,t1:10.9128,t2:16.3692,t3:21.8256},
+  {cod:"85",n:"Servicios sociales y de salud",pct:0.0475,tot:101975,d1:9.8063,d2:19.6127,d3:29.419,t1:19.6127,t2:29.419,t3:39.2253},
+  {cod:"90",n:"Eliminación de desperdicios y saneamiento",pct:0.0062,tot:13250,d1:75.4717,d2:150.9434,d3:226.4151,t1:150.9434,t2:226.4151,t3:301.8868},
+  {cod:"91",n:"Servicios de organizaciones empresariales",pct:0.0244,tot:52393,d1:19.0865,d2:38.173,d3:57.2596,t1:38.173,t2:57.2596,t3:76.3461},
+  {cod:"92",n:"Servicios culturales, deportivos y esparcimiento",pct:0.0177,tot:37880,d1:26.3992,d2:52.7983,d3:79.1975,t1:52.7983,t2:79.1975,t3:105.5966},
+  {cod:"93",n:"Servicios n.c.p.",pct:0.0057,tot:12288,d1:81.3802,d2:162.7604,d3:244.1406,t1:162.7604,t2:244.1406,t3:325.5208}
+];
+
+const EXPO_DATA=[
+  {r:"Cereales",v:[2973,4961,5625,3062,4048]},
+  {r:"Semillas y frutos oleaginosos",v:[880,1000,1184,477,918]},
+  {r:"Pescados y mariscos sin elaborar",v:[221,277,235,218,272]},
+  {r:"Miel",v:[82,106,119,88,89]},
+  {r:"Hortalizas y legumbres sin elaborar",v:[46,48,69,34,71]},
+  {r:"Animales Vivos",v:[14,22,25,18,22]},
+  {r:"Frutas frescas",v:[4,5,3,3,5]},
+  {r:"Lanas sucias",v:[2,4,1,1,3]},
+  {r:"Tabaco sin elaborar",v:[0,0,1,1,1]},
+  {r:"Resto de productos primarios",v:[16,18,25,18,19]},
+  {r:"Residuos y desperdicios de la industria alimenticia",v:[2392,3387,3512,2920,3108]},
+  {r:"Grasas y aceites",v:[1546,2647,3118,2022,2550]},
+  {r:"Carnes y sus preparados",v:[1766,1850,2174,1781,1955]},
+  {r:"Productos de molinería",v:[278,350,470,467,495]},
+  {r:"Pieles y cueros",v:[179,274,281,242,232]},
+  {r:"Productos lácteos",v:[190,193,220,192,213]},
+  {r:"Preparados de hortalizas, legumbres y frutas",v:[150,174,202,208,249]},
+  {r:"Pescados y mariscos elaborados",v:[145,169,183,176,193]},
+  {r:"Azúcar, cacao y artículos de confitería",v:[65,72,74,74,73]},
+  {r:"Bebidas, líquidos alcohólicos y vinagre",v:[48,53,54,45,70]},
+  {r:"Lanas elaboradas",v:[24,44,40,26,30]},
+  {r:"Extractos curtientes y tintóreos",v:[28,30,29,30,17]},
+  {r:"Otros productos de origen animal",v:[34,36,29,29,32]},
+  {r:"Café, té, yerba mate y especias",v:[1,2,3,2,3]},
+  {r:"Frutas secas o procesadas",v:[4,3,3,2,2]},
+  {r:"Resto de MOA",v:[161,168,200,198,217]},
+  {r:"Material de transporte terrestre",v:[2924,4982,6162,6571,6709]},
+  {r:"Productos químicos y conexos",v:[1616,2262,2510,1931,2045]},
+  {r:"Metales comunes y sus manufacturas",v:[603,1032,1169,1099,1137]},
+  {r:"Materias plásticas y artificiales",v:[532,755,789,575,642]},
+  {r:"Máquinas y aparatos, material eléctrico",v:[403,474,502,463,456]},
+  {r:"Caucho y sus manufacturas",v:[103,140,123,110,115]},
+  {r:"Textiles y confecciones",v:[78,101,119,69,71]},
+  {r:"Papel cartón, imprenta y publicaciones",v:[82,111,112,87,93]},
+  {r:"Manufacturas de piedra, yeso, etc.",v:[59,82,107,93,89]},
+  {r:"Manufacturas de cuero, marroquinería, etc.",v:[14,24,25,20,15]},
+  {r:"Vehículos de navegación aérea, marítima y fluvial",v:[1,1,9,3,4]},
+  {r:"Calzado y sus componentes",v:[3,6,5,5,4]},
+  {r:"Piedras, metales preciosos y sus manufacturas",v:[5,4,1,2,2]},
+  {r:"Resto de MOI",v:[76,99,95,86,90]},
+  {r:"Carburantes",v:[1334,1379,2376,2052,2262]},
+  {r:"Gas de petróleo y otros hidrocarburos gaseosos",v:[221,385,550,453,535]},
+  {r:"Grasas y aceites lubricantes",v:[43,72,80,64,72]},
+  {r:"Resto de Combustible y Energía",v:[69,222,413,279,181]}
+];
+const TOTAL_EXPO=23962;
+
+const BDR_SET=new Set(["Adolfo Alsina","Adolfo Gonzales Chaves","Alberti","Arrecifes","Ayacucho","Balcarce","Baradero","Benito Juárez","Berisso","Bolívar","Bragado","Brandsen","Cañuelas","Capitán Sarmiento","Carlos Casares","Carlos Tejedor","Carmen de Areco","Castelli","Chacabuco","Chascomús","Chivilcoy","Colón","Coronel de Marina L. Rosales","Coronel Dorrego","Coronel Pringles","Coronel Suárez","Daireaux","Dolores","Exaltación de la Cruz","Florentino Ameghino","General Alvarado","General Alvear","General Arenales","General Belgrano","General Guido","General Juan Madariaga","General La Madrid","General Las Heras","General Lavalle","General Paz","General Pinto","General Viamonte","General Villegas","Guaminí","Hipólito Yrigoyen","La Costa","Laprida","Las Flores","Leandro N. Alem","Lezama","Lincoln","Lobería","Lobos","Magdalena","Maipú","Mar Chiquita","Marcos Paz","Mercedes","Monte","Monte Hermoso","Navarro","Patagones","Pehuajó","Pellegrini","Pila","Pinamar","Presidente Perón","Puán","Punta Indio","Ramallo","Rauch","Rivadavia","Rojas","Roque Pérez","Saavedra","Saladillo","Salliqueló","Salto","San Andrés de Giles","San Antonio de Areco","San Cayetano","San Pedro","San Vicente","Suipacha","Tapalqué","Tordillo","Tornquist","Tres Lomas","Villa Gesell","Villarino","25 de Mayo","9 de Julio"]);
+
+const MUNS=["Adolfo Alsina","Adolfo Gonzales Chaves","Alberti","Almirante Brown","Arrecifes","Avellaneda","Ayacucho","Azul","Bahía Blanca","Balcarce","Baradero","Benito Juárez","Berazategui","Berisso","Bolívar","Bragado","Brandsen","Campana","Cañuelas","Capitán Sarmiento","Carlos Casares","Carlos Tejedor","Carmen de Areco","Castelli","Chacabuco","Chascomús","Chivilcoy","Colón","Coronel de Marina L. Rosales","Coronel Dorrego","Coronel Pringles","Coronel Suárez","Daireaux","Dolores","Ensenada","Escobar","Esteban Echeverría","Exaltación de la Cruz","Ezeiza","Florencio Varela","Florentino Ameghino","General Alvarado","General Alvear","General Arenales","General Belgrano","General Guido","General Juan Madariaga","General La Madrid","General Las Heras","General Lavalle","General Paz","General Pinto","General Pueyrredón","General Rodríguez","General San Martín","General Viamonte","General Villegas","Guaminí","Hipólito Yrigoyen","Hurlingham","Ituzaingó","José C. Paz","Junín","La Costa","La Matanza","La Plata","Lanús","Laprida","Las Flores","Leandro N. Alem","Lezama","Lincoln","Lobería","Lobos","Lomas de Zamora","Luján","Magdalena","Maipú","Malvinas Argentinas","Mar Chiquita","Marcos Paz","Mercedes","Merlo","Monte","Monte Hermoso","Moreno","Morón","Navarro","Necochea","9 de Julio","Olavarría","Patagones","Pehuajó","Pellegrini","Pergamino","Pila","Pilar","Pinamar","Presidente Perón","Puán","Punta Indio","Quilmes","Ramallo","Rauch","Rivadavia","Rojas","Roque Pérez","Saavedra","Saladillo","Salliqueló","Salto","San Andrés de Giles","San Antonio de Areco","San Cayetano","San Fernando","San Isidro","San Miguel","San Nicolás","San Pedro","San Vicente","Suipacha","Tandil","Tapalqué","Tigre","Tordillo","Tornquist","Trenque Lauquen","Tres Arroyos","25 de Mayo","Tres Lomas","Vicente López","Villa Gesell","Villarino","Zárate"];
+
+const AMAP={a13:{n:"Incremento de empleo",a:2,p:10},a14:{n:"Localización",a:2,p:10},a15:{n:"Sustitución de importaciones",a:2,p:10},a16:{n:"Innovación tecnológica",a:2,p:10},a17:{n:"Incremento de exportaciones",a:1,p:5},a18:{n:"Política de género",a:1,p:5},a20:{n:"Sostenibilidad ambiental",a:1,p:5}};
+
+const PALETA=['#004B98','#C8006E','#009AC7','#007A52','#F5A800','#1A6DB5','#9A0054','#888780'];
+
+// ══════════════════════════════════════════════
+// ESTADO GLOBAL
+// ══════════════════════════════════════════════
+let proyectos=[];
+let chS=null,chI=null,chE=null;
+let mapaLoaded=false;
+let rF={f1:null,f2:null,f3:null,f4:null,f5:null,f6:null,f6a:null,f6b:null,f7:null,f8:null};
+let rA={a13:null,a14:null,a15:null,a16:null,a17:null,a17a:null,a17b:null,a18:null,a20:null};
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+const gv=id=>document.getElementById(id)?.value||'';
+const gn=id=>parseFloat(document.getElementById(id)?.value)||0;
+const gi=id=>parseInt(document.getElementById(id)?.value)||0;
+const getMonto=()=>gn('g-monto');
+const getNivel=()=>{const m=getMonto();return m>=200e6?3:m>=50e6?2:1;};
+function toast(m,d=3000){const t=document.getElementById('toast');document.getElementById('toast-msg').textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
+function fmt(n,dec=2){return typeof n==='number'?n.toLocaleString('es-AR',{minimumFractionDigits:dec,maximumFractionDigits:dec}):'—';}
+function setRes(id,ok,txt){
+  const el=document.getElementById(id);if(!el)return;
+  const c=ok===true?'r-verde':ok===false?'r-rojo':ok==='am'?'r-am':'r-gris';
+  const ic=ok===true?'✅':ok===false?'❌':ok==='am'?'⚠️':'⚪';
+  el.className='calc-res '+c;el.innerHTML=`<span style="flex-shrink:0;">${ic}</span><span>${txt}</span>`;
+}
+
+// ══════════════════════════════════════════════
+// NAVEGACIÓN PRINCIPAL
+// ══════════════════════════════════════════════
+function nTab(t){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nt').forEach(x=>x.classList.remove('active'));
+  const p=document.getElementById('panel-'+t);if(p)p.classList.add('active');
+  const n=document.getElementById('nt-'+t);if(n)n.classList.add('active');
+  if(t==='dashboard')rDash();
+  if(t==='sectores')rSect();
+  if(t==='mapa')loadMapa();
+  if(t==='proyectos')rList();
+  if(t==='criterios')rCrit();
+  if(t==='normativa')rNorm();
+}
+function sw(t){
+  document.querySelectorAll('.sb-i').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById('sb-'+t);if(el)el.classList.add('active');
+  nTab(t);
+}
+function showCrit(t,btn){
+  document.querySelectorAll('.cpanel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ctab').forEach(x=>x.classList.remove('active'));
+  document.getElementById('cp-'+t).classList.add('active');btn.classList.add('active');
+}
+
+// NAVEGACIÓN FORMULARIO
+function goPTab(n){
+  for(let i=0;i<6;i++){
+    document.getElementById('ptc'+i).classList.toggle('active',i===n);
+    document.getElementById('pt'+i).classList.toggle('active',i===n);
+  }
+  if(n===4)calcBen();
+}
+
+// ══════════════════════════════════════════════
+// FORMULARIO — DATOS GENERALES
+// ══════════════════════════════════════════════
+function onSectorChange(){
+  const v=gv('g-sector');
+  document.getElementById('g-pe-wrap').style.display=v.includes('interés estratégico')?'block':'none';
+  calcF1();
+}
+function onMontoChange(){
+  const m=getMonto();const nv=getNivel();
+  const el=document.getElementById('g-nivel-disp');
+  if(m>=5e6){
+    el.style.display='block';
+    el.textContent=`Nivel ${nv} — ${m>=200e6?'Mayor a USD 200M':m>=50e6?'Mayor a USD 50M y hasta USD 200M':'Desde USD 5M hasta USD 50M'} | Beneficio base: ${nv===1?'5 años / 30%':nv===2?'4 años / 25%':'3 años / 20%'}`;
+  } else el.style.display='none';
+  calcF1();calcF2();calcA13();calcA14();calcBen();
+}
+
+// ══════════════════════════════════════════════
+// FINALIDADES
+// ══════════════════════════════════════════════
+function calcF1(){
+  const s=gv('g-sector');const nb=gv('g-naibb');
+  if(!s){setRes('f1-res',null,'Seleccionar sector en "Datos generales".');rF.f1=null;updSem();return;}
+  const ok=s!==''&&nb!=='';
+  setRes('f1-res',ok,ok?`Sector alcanzado: <strong>${s}</strong> — NAIBB: <strong>${nb}</strong>. Cumple art. 5° Ley 15.510.`:'Completar código NAIBB-18 en "Datos generales".');
+  rF.f1=ok;updSem();
+}
+
+function poblarRamas(q=''){
+  const sel=document.getElementById('f2-rama');const val=sel.value;sel.innerHTML='';
+  const data=q?EMPLEO_DATA.filter(r=>r.n.toLowerCase().includes(q.toLowerCase())||r.cod.includes(q)):EMPLEO_DATA;
+  data.forEach(r=>{const o=document.createElement('option');o.value=r.cod;o.textContent=`[${r.cod}] ${r.n}`;if(r.cod===val)o.selected=true;sel.appendChild(o);});
+}
+function filtrarRamas(){poblarRamas(document.getElementById('f2-search').value);}
+
+function calcF2(){
+  const sel=document.getElementById('f2-rama');const cod=sel.value;
+  if(!cod){setRes('f2-res',null,'Seleccionar rama de actividad OEDE/SIPA.');rF.f2=null;updSem();return;}
+  const r=EMPLEO_DATA.find(x=>x.cod===cod);if(!r)return;
+  const op=gn('f2-op');const ind=gn('f2-ind');
+  if(!op){setRes('f2-res',null,'Completar empleo en etapa de operación.');rF.f2=null;updSem();return;}
+  const nv=getNivel();
+  const indDir=(op/r.tot)*100000;const umbD=nv===1?r.d1:nv===2?r.d2:r.d3;
+  const indTot=((op+ind)/r.tot)*100000;const umbT=nv===1?r.t1:nv===2?r.t2:r.t3;
+  const okD=indDir>=umbD;const okT=indTot>=umbT;const ok=okD||okT;
+  setRes('f2-res',ok,
+    `<strong>Rama:</strong> [${r.cod}] ${r.n} (${r.tot.toLocaleString('es-AR')} puestos PBA) | `+
+    `<strong>Indicador directo:</strong> ${fmt(indDir)} vs umbral N${nv} ${fmt(umbD)} → ${okD?'✓':'✗'} | `+
+    `<strong>Indicador dir+ind:</strong> ${fmt(indTot)} vs umbral ${fmt(umbT)} → ${okT?'✓':'✗'}`
+  );
+  rF.f2=ok;calcA13();updSem();
+}
+
+function calcF3(){
+  const p=gv('f3-prov');const pct=gn('f3-pct');const m=getMonto();
+  if(!p){setRes('f3-res',null,'Indicar si contrata proveedores PBA.');rF.f3=null;updSem();return;}
+  if(p==='No'){setRes('f3-res',false,'No contrata proveedores radicados en PBA.');rF.f3=false;updSem();return;}
+  let txt=`Contrata proveedores PBA. Porcentaje declarado: <strong>${pct}%</strong>.`;
+  if(m>50e6){const ok=pct>=50;txt+=` Proyectos >USD 50M: PDPP obligatorio con ≥50%. ${ok?'Cumple.':'<strong>No alcanza el umbral mínimo del 50%.</strong>'}`;setRes('f3-res',ok,txt);rF.f3=ok;}
+  else{setRes('f3-res',true,txt);rF.f3=true;}
+  updSem();
+}
+
+function calcF4(){
+  const t3=gn('f4-t3'),t2=gn('f4-t2'),t1=gn('f4-t1');
+  const p1=gn('f4-p1'),p2=gn('f4-p2'),p3=gn('f4-p3');
+  const inv3=gn('f4-inv3');
+  const hP=(t3+t2+t1)/3;const pP=(p1+p2+p3)/3;
+  let ok4a=null,ok4b=null;
+  if(hP>0||pP>0){
+    const var6a=hP>0?((pP-hP)/hP*100):null;
+    ok4a=var6a!==null?var6a>=10:pP>0;
+    setRes('f4a-res',ok4a,var6a!==null?`Promedio I+D histórico: USD ${fmt(hP)} | Promedio proyectado: USD ${fmt(pP)} | Variación: <strong>${fmt(var6a)}%</strong> (umbral sugerido ≥10%)`:`Sin antecedentes de I+D. Monto proyectado: USD ${fmt(pP)}.`);
+  } else setRes('f4a-res',null,'Completar montos de I+D.');
+  const idProy=p1+p2+p3;
+  if(idProy>0&&inv3>0){
+    const ratio=(idProy/inv3)*100;ok4b=ratio>=1;
+    setRes('f4b-res',ok4b,`I+D total proyectado 3 años: USD ${fmt(idProy)} | Inversión total 3 años: USD ${fmt(inv3)} | Ratio: <strong>${fmt(ratio)}%</strong> (umbral sugerido ≥1%)`);
+  } else setRes('f4b-res',null,'Completar inversión total de los primeros 3 años.');
+  rF.f4=ok4a||ok4b||false;updSem();
+}
+
+function calcF5(){
+  const pct=gn('f5-pct');const rank=gi('f5-rank');
+  if(!pct&&!rank){setRes('f5-res',null,'Completar datos del CEP XXI.');rF.f5=null;updSem();return;}
+  const rA=rank>2;const rB=pct>0&&pct<20;const ok=rA||rB;
+  setRes('f5-res',ok,
+    `Posición en ranking: <strong>${rank||'—'}</strong> (regla a — pos>2: ${rA?'✓':'✗'}) | `+
+    `% establecimientos: <strong>${pct}%</strong> (regla b — <20%: ${rB?'✓':'✗'}) → ${ok?'Diversifica':'No diversifica'}`
+  );
+  rF.f5=ok;
+  const el=document.getElementById('f7-div-auto');
+  if(el)el.textContent=ok?'Sí — diversifica (resultado de F5)':'No — no diversifica (resultado de F5)';
+  calcIDTE();calcF8();updSem();
+}
+
+function calcF6A(){
+  const rub=gv('f6-rubro');const proy=gn('f6-expo-proy');
+  const infoEl=document.getElementById('f6a-info');
+  if(!rub){setRes('f6a-res',null,'Seleccionar rubro de exportación.');return;}
+  const e=EXPO_DATA.find(x=>x.r===rub);
+  if(e){infoEl.style.display='block';infoEl.textContent=`${e.r} | 2022: USD ${e.v[2]}M | 2023: USD ${e.v[3]}M | 2024: USD ${e.v[4]}M`;}
+  if(!proy){setRes('f6a-res',null,'Ingresar exportaciones proyectadas (USD millones).');return;}
+  const pctR=e?(proy/e.v[4]*100):null;const pctT=proy/TOTAL_EXPO*100;
+  const ok1=pctR!==null&&pctR>=5;const ok2=pctT>=0.5;const ok=ok1||ok2;
+  setRes('f6a-res',ok,
+    `% sobre rama 2024: <strong>${pctR!==null?fmt(pctR):'—'}%</strong> (umbral ≥5%: ${ok1?'✓':'✗'}) | `+
+    `% sobre total RPIE PBA: <strong>${fmt(pctT)}%</strong> (umbral ≥0,5%: ${ok2?'✓':'✗'})`
+  );
+  rF.f6a=ok;rF.f6=rF.f6a||rF.f6b||false;updSem();
+}
+
+function calcF6B(){
+  const v=gv('f6-sust');
+  if(!v){setRes('f6b-res',null,'Seleccionar opción.');rF.f6b=null;return;}
+  setRes('f6b-res',v==='Si',v==='Si'?'Sustituye importaciones. El índice se analiza en detalle en el Adicional A15.':'No sustituye importaciones.');
+  rF.f6b=v==='Si';rF.f6=rF.f6a||rF.f6b||false;updSem();
+}
+
+function calcIDTE(){
+  const eV=parseInt(gv('f7-emp'))||0;const pV=parseInt(gv('f7-prov'))||0;
+  const dV=rF.f5===true?5:rF.f5===false?0:null;
+  const primV=gv('f7-prim')==='5'?5:gv('f7-prim')==='0'?0:null;
+  if(dV===null||primV===null||!eV||!pV){setRes('f7-res',null,'Completar las 4 variables para calcular IDTE.');rF.f7=null;updSem();return;}
+  const idte=(eV*0.4)+(pV*0.3)+(dV*0.15)+(primV*0.15);
+  let cat,cls;
+  if(idte<1){cat='Bajo';cls=false;}
+  else if(idte<2){cat='Medio bajo';cls='am';}
+  else if(idte<3){cat='Medio';cls='am';}
+  else if(idte<4){cat='Medio alto';cls=true;}
+  else{cat='Alto';cls=true;}
+  setRes('f7-res',cls,`IDTE: <strong>${fmt(idte)}</strong> → Categoría: <strong>${cat}</strong> | Empleo: ${fmt(eV*0.4,2)} + Proveedores: ${fmt(pV*0.3,2)} + Diversif.: ${fmt(dV*0.15,2)} + Primario: ${fmt(primV*0.15,2)}`);
+  rF.f7=idte>0;updSem();
+}
+
+function calcF8(){
+  const pct=gn('f5-pct');
+  if(!pct&&pct!==0){setRes('f8-res',null,'Se calcula con el dato de F5 (% establecimientos).');rF.f8=null;updSem();return;}
+  const ok=pct<=10;
+  setRes('f8-res',ok,`% establecimientos: <strong>${pct}%</strong> (umbral ≤10%: ${ok?'✓ Sector nuevo o de muy escaso desarrollo local':'✗ Actividad ya consolidada en el municipio'})`);
+  rF.f8=ok;updSem();
+}
+
+function updSem(){
+  const defs=[{k:'f1',l:'F1 — Sector'},{k:'f2',l:'F2 — Empleo'},{k:'f3',l:'F3 — Proveedores'},{k:'f4',l:'F4 — Innovación'},{k:'f5',l:'F5 — Diversif.'},{k:'f6',l:'F6 — Expo/Sust.'},{k:'f7',l:'F7 — Territorial'},{k:'f8',l:'F8 — Nuevos sect.'}];
+  const sem=document.getElementById('sem-finalidades');
+  if(!sem)return;
+  sem.innerHTML=defs.map(d=>{
+    const v=rF[d.k];
+    const bg=v===true?'var(--ve-lt)':v===false?'var(--ro-lt)':'var(--gr-lt)';
+    const bc=v===true?'var(--ve)':v===false?'var(--ro)':'var(--gr-mid)';
+    const ic=v===true?'✅':v===false?'❌':'⚪';
+    return `<div class="sem-item" style="background:${bg};border-color:${bc};"><div style="font-size:14px;">${ic}</div><div style="font-size:10px;color:#333;margin-top:3px;">${d.l}</div></div>`;
+  }).join('');
+  const cumpl=defs.filter(d=>rF[d.k]===true).length;
+  const el=document.getElementById('conclusion-estrat');
+  if(!el)return;
+  if(cumpl===0&&defs.every(d=>rF[d.k]===null)){setRes('conclusion-estrat',null,'Completar los indicadores para determinar el carácter estratégico.');}
+  else if(cumpl===0){setRes('conclusion-estrat',false,'Sin finalidades cumplidas. El proyecto no califica como estratégico en su estado actual.');}
+  else{setRes('conclusion-estrat',true,`<strong>${cumpl}/8 finalidades cumplidas.</strong> El proyecto contribuye al cumplimiento del art. 2° de la Ley 15.510 y califica como estratégico.`);}
+}
+
+// ══════════════════════════════════════════════
+// ADICIONALES
+// ══════════════════════════════════════════════
+function calcA13(){
+  const nv=getNivel();const umb=nv===1?0.08:nv===2?0.15:0.25;
+  const act=gn('f2-act');const op=gn('f2-op');
+  if(!act||!op){setRes('a13-res',null,'Se calcula con los datos de F2 (dotación actual y empleo en operación).');rA.a13=null;calcBen();return;}
+  const var_=((op-act)/act);const ok=var_>=umb;
+  setRes('a13-res',ok,`Dotación actual: ${act} | Empleo operación: ${op} | Variación: <strong>${fmt(var_*100)}%</strong> (umbral N${nv}: ${(umb*100).toFixed(0)}%) → ${ok?'Cumple. +2 años / +10%.':'No cumple.'}`);
+  rA.a13=ok;calcBen();
+}
+
+function calcA14(){
+  const mun=gv('g-municipio');const bdr=BDR_SET.has(mun);const park=gv('a14-parque')==='Si';
+  const bdrEl=document.getElementById('a14-bdr');
+  if(bdrEl){bdrEl.innerHTML=mun?(bdr?'<span class="badge bve">Sí — Partido de BDR (Anexo III Dec. 2731/2025)</span>':'<span class="badge bno">No</span>'):'— seleccionar municipio en Datos generales';}
+  if(!mun&&!park){setRes('a14-res',null,'Seleccionar municipio en Datos generales.');rA.a14=null;calcBen();return;}
+  const ok=bdr||park;
+  setRes('a14-res',ok,ok?`Localización cumple: ${bdr?'Partido de BDR — '+mun:''}${bdr&&park?' + ':''}${park?'Parque industrial habilitado (Ley 13.744)':''}. <strong>+2 años / +10%.</strong>`:'No se ubica en partido BDR ni en parque industrial habilitado.');
+  rA.a14=ok;calcBen();
+}
+
+function calcA15(){
+  const sust=gv('f6-sust');
+  if(sust!=='Si'){setRes('a15-res',null,'Aplica solo si el proyecto sustituye importaciones (F6-B = Sí).');rA.a15=null;calcBen();return;}
+  const fobH=gn('a15-fob-h'),cantH=gn('a15-cant-h'),ppH=gn('a15-ppesos-h'),tcH=gn('a15-tc-h');
+  const fobP=gn('a15-fob-p'),cantP=gn('a15-cant-p'),pusdP=gn('a15-pusd-p');
+  const precUsdH=tcH>0?ppH/tcH:0;const ventH=cantH*precUsdH;
+  const incid1=ventH>0?fobH/ventH:null;
+  const el1=document.getElementById('a15-calc-h');
+  if(el1&&incid1!==null){el1.style.display='block';el1.textContent=`Precio USD histórico: USD ${fmt(precUsdH,4)}/u | Ventas USD históricas: USD ${fmt(ventH)} | Incidencia histórica: ${fmt(incid1*100,4)}%`;}
+  const ventP=cantP*pusdP;const incid2=ventP>0?fobP/ventP:null;
+  const el2=document.getElementById('a15-calc-p');
+  if(el2&&incid2!==null){el2.style.display='block';el2.textContent=`Ventas USD proyectadas: USD ${fmt(ventP)} | Incidencia proyectada: ${fmt(incid2*100,4)}%`;}
+  if(incid1===null||incid2===null||incid1===0){setRes('a15-res',null,'Completar todos los campos para calcular el índice.');rA.a15=null;calcBen();return;}
+  const idx=incid1/incid2;const ok=idx>1;
+  setRes('a15-res',ok,`Índice de sustitución: <strong>${fmt(idx,4)}</strong> ${ok?'(>1 → sustitución verificada. +2 años / +10%.':idx===1?'(=1 → sin variación)':'(<1 → empeoró la incidencia del componente importado)'}`);
+  rA.a15=ok;calcBen();
+}
+
+function calcA16(){
+  const n=[1,2,3,4,5,6,7,8].filter(i=>document.getElementById('i'+i)?.checked).length;
+  const ok=n>=2;
+  setRes('a16-res',ok,`${n}/8 criterios verificados (mínimo 2). ${ok?'+2 años / +10%.':'No cumple el umbral mínimo aún.'}`);
+  rA.a16=ok;calcBen();
+}
+
+function calcA17(){
+  const nv=getNivel();const umb=nv===1?0.20:nv===2?0.15:0.10;
+  const ini=gn('a17-ini');const a1=gn('a17-a1');const a2=gn('a17-a2');const a3=gn('a17-a3');
+  const prom=(a1+a2+a3)/3;
+  if(ini>0||prom>0){
+    const vb=ini>0?(prom-ini)/ini:null;const okA=vb!==null?vb>=umb:prom>0;
+    setRes('a17a-res',okA,`Situación inicial: USD ${fmt(ini)} | Promedio proyectado Años 1-3: USD ${fmt(prom)} | Incremento: <strong>${vb!==null?fmt(vb*100)+'%':'—'}</strong> (umbral N${nv}: ${(umb*100).toFixed(0)}%) → ${okA?'+1 año / +5%.':'No cumple.'}`);
+    rA.a17a=okA;
+  }
+  const pI=gn('a17-prod-ini');const pA=gn('a17-prod-a1');const mI=gn('a17-mi-ini');const mA=gn('a17-mi-a1');
+  if(pI>0||mI>0){
+    const okB=mA>=mI;
+    setRes('a17b-res',okB,`Producción total: ${pI.toLocaleString('es-AR')}→${pA.toLocaleString('es-AR')} u | Mercado interno: ${mI.toLocaleString('es-AR')}→${mA.toLocaleString('es-AR')} u → ${okB?'MI no afectado ✓':'MI se contrae ✗'}`);
+    rA.a17b=okB;
+  }
+  rA.a17=(rA.a17a===true&&rA.a17b===true)||false;calcBen();
+}
+
+function togGen(){document.getElementById('a18-est').style.display=gv('a18-plan')==='Si'?'block':'none';}
+function togAmb(){document.getElementById('a20-est').style.display=gv('a20-plan')==='Si'?'block':'none';}
+
+function calcA18(){
+  const plan=gv('a18-plan');
+  if(plan!=='Si'){setRes('a18-res',plan==='No'?false:null,plan==='No'?'No presenta Plan de Equidad de Género.':'Indicar si presenta Plan de Equidad de Género.');rA.a18=plan==='No'?false:null;calcBen();return;}
+  const n=document.querySelectorAll('.gc:checked').length;const nv=getNivel();const umb=nv===1?1:nv===2?2:3;const ok=n>=umb;
+  setRes('a18-res',ok,`Plan presente. Estrategias marcadas: <strong>${n}</strong> (umbral N${nv}: ≥${umb}). ${ok?'+1 año / +5%.':'No alcanza el umbral mínimo.'}`);
+  rA.a18=ok;calcBen();
+}
+
+function calcA20(){
+  const plan=gv('a20-plan');
+  if(plan!=='Si'){setRes('a20-res',plan==='No'?false:null,plan==='No'?'No presenta Plan de Sostenibilidad Ambiental.':'Indicar si presenta Plan Ambiental.');rA.a20=plan==='No'?false:null;calcBen();return;}
+  const n=document.querySelectorAll('.ac:checked').length;const nv=getNivel();const umb=nv===1?1:nv===2?2:3;const ok=n>=umb;
+  setRes('a20-res',ok,`Plan presente. Acciones marcadas: <strong>${n}</strong> (umbral N${nv}: ≥${umb}). ${ok?'+1 año / +5%.':'No alcanza el umbral mínimo.'}`);
+  rA.a20=ok;calcBen();
+}
+
+// Listeners
+['f3-prov','f3-pct'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',calcF3);el?.addEventListener('input',calcF3);});
+['f4-t3','f4-t2','f4-t1','f4-p1','f4-p2','f4-p3','f4-inv3'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',calcF4);});
+['f5-pct','f5-rank'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',calcF5);});
+document.getElementById('f6-rubro').addEventListener('change',calcF6A);
+document.getElementById('f6-expo-proy')?.addEventListener('input',calcF6A);
+document.getElementById('f6-sust').addEventListener('change',()=>{calcF6B();calcA15();});
+['f7-emp','f7-prov','f7-prim'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',calcIDTE);});
+['a15-fob-h','a15-cant-h','a15-ppesos-h','a15-tc-h','a15-fob-p','a15-cant-p','a15-pusd-p'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',calcA15);});
+[1,2,3,4,5,6,7,8].forEach(i=>{const el=document.getElementById('i'+i);if(el)el.addEventListener('change',calcA16);});
+['a17-ini','a17-a1','a17-a2','a17-a3','a17-prod-ini','a17-prod-a1','a17-mi-ini','a17-mi-a1'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',calcA17);});
+document.querySelectorAll('.gc').forEach(el=>el.addEventListener('change',calcA18));
+document.querySelectorAll('.ac').forEach(el=>el.addEventListener('change',calcA20));
+document.getElementById('a14-parque').addEventListener('change',calcA14);
+document.getElementById('g-naibb')?.addEventListener('input',calcF1);
+document.getElementById('g-municipio')?.addEventListener('change',()=>{calcA14();});
+
+// ══════════════════════════════════════════════
+// CÁLCULO DE BENEFICIOS
+// ══════════════════════════════════════════════
+function calcBen(){
+  const m=getMonto();const area=document.getElementById('ben-cont');
+  if(!m||m<5e6){area.innerHTML='<div class="calc-res r-gris"><span>⚪</span><span>Completar monto de inversión en "Datos generales" para activar el cálculo.</span></div>';return;}
+  const nv=getNivel();
+  let aB,pB,mA,mP;
+  if(nv===3){aB=3;pB=20;mA=13;mP=55;}else if(nv===2){aB=4;pB=25;mA=14;mP=60;}else{aB=5;pB=30;mA=15;mP=65;}
+  let aAdd=0,pAdd=0,det=[];
+  Object.entries(AMAP).forEach(([k,d])=>{if(rA[k]===true){aAdd+=d.a;pAdd+=d.p;det.push({k,d});}});
+  const aT=Math.min(aB+aAdd,mA);const pT=Math.min(pB+pAdd,mP);
+  const tramo=m>=200e6?'mayor a USD 200.000.000':m>=50e6?'mayor a USD 50M y hasta USD 200M':'desde USD 5M hasta USD 50M';
+  const naibb=gv('g-naibb')||'—';const part=gv('g-partida')||'—';
+  const afI=parseFloat(document.getElementById('g-afim')?.value)||100;
+  const afB2=parseFloat(document.getElementById('g-afib')?.value)||100;
+  const pInm=+((afI/100)*pT).toFixed(2);const pIIBB=+((afB2/100)*pT).toFixed(2);
+  const addRows=det.map(({d})=>`<tr class="add"><td style="padding-left:20px;font-size:10px;color:var(--ce-dk);">${d.n}</td><td>Inmob., IIBB, Sellos</td><td style="text-align:center;">+${d.p}%</td><td style="text-align:center;">+${d.a}</td></tr>`).join('');
+  const fund=genFund(m,nv,aT,pT,tramo,naibb,part,afI,afB2,det,pInm,pIIBB);
+  area.innerHTML=`
+  <div class="ben-sec"><div class="ben-sec-hdr" style="background:var(--az);">Beneficio base — Tramo ${tramo}</div>
+  <table class="btbl"><thead><tr><th class="az" style="width:36%">Categoría</th><th class="az">Impuesto</th><th class="az" style="width:13%;text-align:center;">%</th><th class="az" style="width:11%;text-align:center;">Años</th></tr></thead>
+  <tbody><tr><td><strong>Beneficio base</strong></td><td>Inmobiliario, Ingresos Brutos, Sellos</td><td style="text-align:center;font-weight:700;">${pB}%</td><td style="text-align:center;font-weight:700;">${aB}</td></tr></tbody></table></div>
+  <div class="ben-sec"><div class="ben-sec-hdr" style="background:var(--ce);">Beneficios adicionales verificados</div>
+  <table class="btbl"><thead><tr><th class="ce" style="width:36%">Condición</th><th class="ce">Impuesto</th><th class="ce" style="width:13%;text-align:center;">%</th><th class="ce" style="width:11%;text-align:center;">Años</th></tr></thead>
+  <tbody>${det.length?addRows:'<tr><td colspan="4" style="padding:8px;text-align:center;font-size:11px;color:var(--gr);">Sin condiciones adicionales verificadas.</td></tr>'}</tbody></table></div>
+  <div class="ben-sec"><div class="ben-sec-hdr" style="background:var(--az);">Totales</div>
+  <table class="btbl"><thead><tr><th class="az" colspan="2">Concepto</th><th class="az" style="text-align:center;">% Exención</th><th class="az" style="text-align:center;">Años</th></tr></thead>
+  <tbody><tr class="maxtbl"><td colspan="2" style="font-size:10px;">Beneficios máximos permitidos (art. 15° Ley 15.510)</td><td style="text-align:center;">${mP}%</td><td style="text-align:center;">${mA}</td></tr>
+  <tr class="tot"><td colspan="2">Total de beneficios otorgados</td><td style="text-align:center;font-size:15px;">${pT}%</td><td style="text-align:center;font-size:15px;">${aT}</td></tr></tbody></table></div>
+  <div class="ben-sec"><div class="ben-sec-hdr" style="background:var(--fu);">Beneficios finales aplicables por impuesto</div>
+  <table class="btbl"><thead><tr><th class="fu">Impuesto</th><th class="fu">Partida / Código NAIBB</th><th class="fu" style="text-align:center;">% Afectación</th><th class="fu" style="text-align:center;">% Beneficio resultante</th><th class="fu" style="text-align:center;">Plazo (años)</th></tr></thead>
+  <tbody>
+  <tr><td><strong>Impuesto Inmobiliario</strong></td><td style="font-size:10px;">${part}</td><td style="text-align:center;">${afI}%</td><td style="text-align:center;font-weight:700;color:var(--az-dk);">${pInm}%</td><td style="text-align:center;">${aT}</td></tr>
+  <tr><td><strong>Ingresos Brutos</strong></td><td style="font-size:10px;">${naibb}</td><td style="text-align:center;">${afB2}%</td><td style="text-align:center;font-weight:700;color:var(--az-dk);">${pIIBB}%</td><td style="text-align:center;">${aT}</td></tr>
+  <tr><td><strong>Impuesto de Sellos</strong></td><td style="font-size:10px;color:var(--gr);">Actos vinculados al proyecto</td><td style="text-align:center;">100%</td><td style="text-align:center;font-weight:700;color:var(--az-dk);">${pT}%</td><td style="text-align:center;">${aT}</td></tr>
+  <tr style="background:var(--az-lt);"><td colspan="4" style="font-weight:700;color:var(--az-dk);">Estabilidad fiscal (art. 17° Ley 15.510)</td><td style="text-align:center;font-weight:700;color:var(--az-dk);">${aT}</td></tr>
+  </tbody></table>
+  <div style="font-size:9px;color:var(--gr);padding:5px 10px;">* % Inmob. = % afectación inmueble × % exención total. % IIBB = % producción nueva × % exención total (art. 15° incs. 1 y 2, Dec. 2731/2025).</div></div>
+  ${fund}`;
+}
+
+function genFund(m,nv,aT,pT,tramo,naibb,part,afI,afB2,det,pInm,pIIBB){
+  const razon=gv('g-razon')||'la empresa';const nombre=gv('g-nombre')||'el proyecto';
+  const sector=gv('g-sector')||'—';const municipio=gv('g-municipio')||'—';const tipo=gv('g-tipo')||'—';
+  const ms=m>=1e9?'USD '+(m/1e9).toFixed(2)+'B':m>=1e6?'USD '+(m/1e6).toFixed(2)+'M':'USD '+m.toLocaleString('es-AR');
+  const triL=m>=200e6?'inciso c)':m>=50e6?'inciso b)':'inciso a)';
+  const obs=gv('obs-gral');const obc=gv('obs-cond');const obsa=gv('obs-adic');
+  const nomF={f1:'Sector estratégico (art. 2° inc. a)',f2:'Generación de empleo (art. 2° inc. b)',f3:'Proveedores provinciales (art. 2° inc. c)',f4:'Innovación y transferencia tecnológica (art. 2° inc. d)',f5:'Diversificación productiva (art. 2° inc. e)',f6:'Exportaciones / Sustitución de importaciones (art. 2° inc. f)',f7:'Desarrollo territorial equitativo (art. 2° inc. g)',f8:'Nuevos sectores productivos (art. 2° inc. h)'};
+  const fC=Object.entries(rF).filter(([k,v])=>v===true&&nomF[k]).map(([k])=>`<li>${nomF[k]}</li>`).join('');
+  const aD=det.map(({d})=>`<li>${d.n}: +${d.a} años / +${d.p}%</li>`).join('');
+  return `<div class="fund-box">
+  <div style="font-size:12px;font-weight:700;color:var(--az-dk);margin-bottom:10px;">📄 Texto de fundamentación del dictamen</div>
+  <div style="margin-bottom:10px;"><div class="fund-lbl">I. Encuadre normativo</div>
+  <div class="fund-txt">La empresa <strong>${razon}</strong> solicita adhesión al Régimen Provincial de Inversiones Estratégicas (<strong>Ley 15.510</strong>, Dec. 2731/2025) para el proyecto "<strong>${nombre}</strong>": <strong>${tipo}</strong> — sector <strong>${sector}</strong> — partido de <strong>${municipio}</strong> — <strong>${ms}</strong> (${triL} del art. 7° Ley 15.510). NAIBB-18: ${naibb}. Cumple arts. 3°, 4° y 5°.</div></div>
+  ${fC?`<div style="margin-bottom:10px;"><div class="fund-lbl">II. Finalidades del régimen (art. 2° Ley 15.510)</div><div class="fund-txt"><ul style="margin-left:1rem;line-height:1.9;">${fC}</ul></div></div>`:''}
+  ${aD?`<div style="margin-bottom:10px;"><div class="fund-lbl">III. Condiciones adicionales (art. 15° Ley 15.510)</div><div class="fund-txt"><ul style="margin-left:1rem;line-height:1.9;">${aD}</ul></div></div>`:''}
+  <div style="margin-bottom:10px;"><div class="fund-lbl">IV. Beneficios fiscales resultantes</div>
+  <div class="fund-txt">Conforme art. 15° Ley 15.510 y Dec. 2731/2025: exención Inmob. partida ${part}: <strong>${pInm}%</strong>; exención IIBB cód. ${naibb}: <strong>${pIIBB}%</strong>; exención Sellos: <strong>${pT}%</strong>. Todos por <strong>${aT} años</strong> (art. 16°; IIBB desde cumplimiento total del proyecto). Estabilidad fiscal: ${aT} años (art. 17°).
+  <br><span class="fund-norm">⚖️ Ley 15.510 arts. 14°, 15°, 16° y 17° · Dec. 2731/2025 art. 15°</span></div></div>
+  ${obs?`<div style="margin-bottom:10px;"><div class="fund-lbl">V. Observaciones</div><div class="fund-txt">${obs}</div></div>`:''}
+  ${obc?`<div style="margin-bottom:10px;"><div class="fund-lbl">VI. Condicionamientos y doc. pendiente</div><div class="fund-txt">${obc}</div></div>`:''}
+  ${obsa?`<div><div class="fund-lbl">VII. Observaciones sobre adicionales</div><div class="fund-txt">${obsa}</div></div>`:''}
+  </div>`;
+}
+
+// ══════════════════════════════════════════════
+// GUARDAR PROYECTO
+// ══════════════════════════════════════════════
+async function guardar(){
+  const razon=gv('g-razon');const nombre=gv('g-nombre');const municipio=gv('g-municipio');
+  const sector=gv('g-sector');const tipo=gv('g-tipo');const estado=gv('g-estado');const monto=getMonto();const naibb=gv('g-naibb');
+  if(!razon||!nombre||!municipio||!sector||!tipo||!estado||monto<5e6||!naibb){toast('Completar campos obligatorios (*) en Datos generales. Monto mínimo USD 5.000.000.');return;}
+  const nv=getNivel();let aB,pB,mA,mP;
+  if(nv===3){aB=3;pB=20;mA=13;mP=55;}else if(nv===2){aB=4;pB=25;mA=14;mP=60;}else{aB=5;pB=30;mA=15;mP=65;}
+  let aAdd=0,pAdd=0,det=[];
+  Object.entries(AMAP).forEach(([k,d])=>{if(rA[k]===true){aAdd+=d.a;pAdd+=d.p;det.push(k);}});
+  const aT=Math.min(aB+aAdd,mA);const pT=Math.min(pB+pAdd,mP);
+  const afI=parseFloat(document.getElementById('g-afim')?.value)||100;
+  const afB2=parseFloat(document.getElementById('g-afib')?.value)||100;
+  const p={id:Date.now(),cuit:gv('g-cuit'),razon,nombre,municipio,estado,sector,tipo,monto,inicio:gv('g-inicio'),naibb,partida:gv('g-partida'),afI,afB:afB2,
+    empDir:gn('f2-op'),empInd:gn('f2-ind'),empAct:gn('f2-act'),
+    bdr:BDR_SET.has(municipio),parque:gv('a14-parque'),
+    finalidades:{...rF},adicionales:{...rA},
+    beneficio:{anos:aT,pct:pT,pctInm:+((afI/100)*pT).toFixed(2),pctIIBB:+((afB2/100)*pT).toFixed(2)},
+    obs:gv('obs-gral'),obsCond:gv('obs-cond'),obsAdic:gv('obs-adic'),
+    fechaCarga:new Date().toISOString()};
+  proyectos.push(p);
+  try{localStorage.setItem('rpie-v5',JSON.stringify(proyectos));scheduleSync&&scheduleSync();}catch(e){}
+  mapaLoaded=false;
+  toast('✓ Proyecto guardado correctamente.');
+  resetForm();nTab('proyectos');
+}
+
+function resetForm(){
+  document.querySelectorAll('#panel-nuevo input[type="text"],#panel-nuevo input[type="number"],#panel-nuevo input[type="date"]').forEach(el=>el.value='');
+  document.querySelectorAll('#panel-nuevo select').forEach(el=>el.value='');
+  document.querySelectorAll('#panel-nuevo textarea').forEach(el=>el.value='');
+  document.querySelectorAll('#panel-nuevo input[type="checkbox"]').forEach(el=>el.checked=false);
+  document.getElementById('a18-est').style.display='none';document.getElementById('a20-est').style.display='none';
+  document.getElementById('g-pe-wrap').style.display='none';document.getElementById('g-nivel-disp').style.display='none';
+  document.getElementById('a14-bdr').textContent='— seleccionar municipio en Datos generales';
+  document.getElementById('f6a-info').style.display='none';
+  document.getElementById('f7-div-auto').textContent='— se alimenta automáticamente del resultado de F5';
+  document.getElementById('a15-calc-h').style.display='none';document.getElementById('a15-calc-p').style.display='none';
+  rF={f1:null,f2:null,f3:null,f4:null,f5:null,f6:null,f6a:null,f6b:null,f7:null,f8:null};
+  rA={a13:null,a14:null,a15:null,a16:null,a17:null,a17a:null,a17b:null,a18:null,a20:null};
+  document.querySelectorAll('.calc-res').forEach(el=>{el.className='calc-res r-gris';el.innerHTML='<span>⚪</span><span>—</span>';});
+  document.getElementById('ben-cont').innerHTML='<div class="calc-res r-gris"><span>⚪</span><span>Completar monto de inversión para activar el cálculo.</span></div>';
+  updSem();goPTab(0);
+}
+
+// ══════════════════════════════════════════════
+// TABLAS DE REFERENCIA
+// ══════════════════════════════════════════════
+function renderEmpTbl(data){
+  document.getElementById('tbl-emp-body').innerHTML=data.map(r=>`<tr>
+    <td>${r.cod}</td><td>${r.n}</td><td>${(r.pct*100).toFixed(2)}%</td><td>${r.tot.toLocaleString('es-AR')}</td>
+    <td style="text-align:right;">${fmt(r.d1)}</td><td style="text-align:right;">${fmt(r.d2)}</td><td style="text-align:right;">${fmt(r.d3)}</td>
+    <td style="text-align:right;">${fmt(r.t1)}</td><td style="text-align:right;">${fmt(r.t2)}</td><td style="text-align:right;">${fmt(r.t3)}</td>
+  </tr>`).join('');
+}
+function filtEmpTbl(){const q=document.getElementById('tbl-emp-search').value.toLowerCase();renderEmpTbl(q?EMPLEO_DATA.filter(r=>r.n.toLowerCase().includes(q)||r.cod.includes(q)):EMPLEO_DATA);}
+
+function renderExpTbl(data){
+  document.getElementById('tbl-exp-body').innerHTML=data.map(e=>{
+    const pct=e.v[4]/TOTAL_EXPO*100;
+    return `<tr><td>${e.r}</td>${e.v.map(v=>`<td style="text-align:right;">${v}</td>`).join('')}<td style="text-align:center;">${fmt(pct)}%</td></tr>`;
+  }).join('');
+}
+function filtExpTbl(){const q=document.getElementById('tbl-exp-search').value.toLowerCase();renderExpTbl(q?EXPO_DATA.filter(e=>e.r.toLowerCase().includes(q)):EXPO_DATA);}
+
+// ══════════════════════════════════════════════
+// DASHBOARD Y VISTAS
+// ══════════════════════════════════════════════
+function rDash(){
+  document.getElementById('st-total').textContent=proyectos.length||'0';
+  const tI=proyectos.reduce((s,p)=>s+(p.monto||0),0);
+  document.getElementById('st-inv').textContent=tI>=1e9?'USD '+(tI/1e9).toFixed(1)+'B':tI>=1e6?'USD '+(tI/1e6).toFixed(1)+'M':tI>0?'USD '+tI.toLocaleString('es-AR'):'—';
+  const sc={};proyectos.forEach(p=>{sc[p.sector]=(sc[p.sector]||0)+1;});
+  const top=Object.entries(sc).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('st-sector').textContent=top?top[0].split('.')[0]+'…':'—';
+  document.getElementById('st-mun').textContent=new Set(proyectos.map(p=>p.municipio)).size||'0';
+  document.getElementById('dash-sub').textContent=proyectos.length?`${proyectos.length} proyecto${proyectos.length>1?'s':''} cargados.`:'Sin proyectos cargados. Ir a "Nuevo proyecto" para comenzar.';
+  if(chS)chS.destroy();
+  const sL=Object.keys(sc).map(s=>s.split('.').slice(1).join('.').trim().substring(0,16));
+  if(sL.length){chS=new Chart(document.getElementById('ch-sector').getContext('2d'),{type:'doughnut',data:{labels:sL,datasets:[{data:Object.values(sc),backgroundColor:PALETA.slice(0,Object.values(sc).length),borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:9}}}}});}
+  document.getElementById('dash-list').innerHTML=proyectos.length?proyectos.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--gr-mid);gap:7px;flex-wrap:wrap;"><span style="font-weight:600;font-size:11px;color:var(--az-dk);">${p.nombre}</span><span style="font-size:10px;color:var(--gr);">${p.razon}</span><span class="badge baz">${p.sector?.split('.')[0]}</span><span style="font-size:10px;color:var(--gr);">${p.municipio}</span><span style="font-size:11px;font-weight:600;color:var(--fu-dk);">USD ${(p.monto/1e6).toFixed(1)}M</span><span class="badge bve">${p.beneficio?.anos}a/${p.beneficio?.pct}%</span></div>`).join(''):'<div style="font-size:11px;color:var(--gr);">Sin proyectos aún.</div>';
+}
+
+function rSect(){
+  const sec={};proyectos.forEach(p=>{if(!sec[p.sector])sec[p.sector]={inv:0,emp:0};sec[p.sector].inv+=p.monto||0;sec[p.sector].emp+=(p.empDir||0)+(p.empInd||0);});
+  const L=Object.keys(sec).map(s=>s.split('.').slice(1).join('.').trim().substring(0,18));
+  if(chI)chI.destroy();
+  const h1=Math.max(L.length*40+80,200);document.getElementById('ch-inv').parentElement.style.height=h1+'px';
+  if(L.length)chI=new Chart(document.getElementById('ch-inv').getContext('2d'),{type:'bar',data:{labels:L,datasets:[{data:Object.values(sec).map(s=>Math.round(s.inv/1e6)),backgroundColor:PALETA.slice(0,L.length)}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  if(chE)chE.destroy();
+  const h2=Math.max(L.length*40+80,200);document.getElementById('ch-emp').parentElement.style.height=h2+'px';
+  if(L.length)chE=new Chart(document.getElementById('ch-emp').getContext('2d'),{type:'bar',data:{labels:L,datasets:[{data:Object.values(sec).map(s=>s.emp),backgroundColor:PALETA.slice(0,L.length)}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+}
+
+function rList(){
+  document.getElementById('proj-sub').textContent=proyectos.length?`${proyectos.length} proyecto${proyectos.length>1?'s':''}`:'Sin proyectos cargados.';
+  document.getElementById('proj-body').innerHTML=proyectos.length?proyectos.map(p=>`<div class="prow"><div><div style="font-weight:600;">${p.nombre}</div><div style="font-size:9px;color:var(--gr);">${p.razon} · ${p.tipo||''}</div></div><div>${p.municipio}${p.bdr?' <span class="badge bve" style="font-size:9px;">BDR</span>':''}</div><div><span class="badge baz">${(p.sector||'').split('.')[0]}</span></div><div style="font-weight:600;color:var(--fu-dk);">${p.monto>=1e6?(p.monto/1e6).toFixed(1)+'M':p.monto?.toLocaleString('es-AR')}</div><div><span class="badge ${p.estado==='aprobado'?'bve':'bpar'}">${p.estado==='aprobado'?'🏭 Aprobado':'🔍 Evaluación'}</span> <span class="badge baz" style="margin-top:2px;">${p.beneficio?.anos}a/${p.beneficio?.pct}%</span></div><div><button class="btn" style="padding:3px 7px;font-size:10px;" onclick="abrirProyecto(${p.id})" style="background:var(--az);color:#fff;border-color:var(--az);" title="Ver / Editar">✏️</button><button class="btn" style="padding:3px 7px;font-size:10px;color:var(--ro);" onclick="eliminarProyecto(${p.id})" title="Eliminar">🗑️</button></div></div>`).join(''):'<div style="padding:15px;text-align:center;font-size:11px;color:var(--gr);">Sin proyectos cargados.</div>';
+}
+
+function verDet(id){const p=proyectos.find(x=>x.id===id);if(!p)return;sendPrompt(`Mostrar detalle del proyecto "${p.nombre}" de ${p.razon}. Municipio: ${p.municipio}${p.bdr?' (BDR)':''}. Estado: ${p.estado}. Sector: ${p.sector}. Inversión: USD ${(p.monto/1e6).toFixed(2)}M. NAIBB: ${p.naibb}. Beneficio: ${p.beneficio?.anos} años al ${p.beneficio?.pct}% (Inmob: ${p.beneficio?.pctInm}%, IIBB: ${p.beneficio?.pctIIBB}%). Finalidades cumplidas: ${JSON.stringify(p.finalidades)}. Adicionales: ${JSON.stringify(p.adicionales)}.`);}
+
+// ══════════════════════════════════════════════
+// MAPA
+// ══════════════════════════════════════════════
+function normM(s){return(s||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/Ñ/g,'N').replace(/\./g,'').trim();}
+function esBDR_M(n){
+  const x=normM(n);
+  const BDR_NORM=new Set([...BDR_SET].map(m=>normM(m)));
+  return BDR_NORM.has(x);
+}
+
+async function loadMapa(){
+  if(mapaLoaded)return;
+  const st=document.getElementById('map-status');
+  try{
+    const topo=await d3.json('https://cdn.jsdelivr.net/gh/mgaitan/departamentos_argentina@master/departamentos-argentina.topojson');
+    const all=topojson.feature(topo,topo.objects['departamentos-argentina']).features;
+    const feats=all.filter(f=>normM(f.properties.provincia)==='BUENOS AIRES');
+    if(!feats.length){st.textContent='No se encontraron partidos.';return;}
+    st.style.display='none';document.getElementById('mapa-svg').style.display='block';
+    const svg=d3.select('#mapa-svg');const g=d3.select('#mapa-g');
+    const outer=document.getElementById('map-outer');const tt=document.getElementById('map-tt');
+    const proj=d3.geoMercator().fitSize([700,560],{type:'FeatureCollection',features:feats});
+    const path=d3.geoPath(proj);
+    const zoom=d3.zoom().scaleExtent([0.5,14]).on('zoom',(ev)=>{
+      const t=ev.transform;g.attr('transform',`translate(${t.x},${t.y}) scale(${t.k})`);
+      g.selectAll('.pp').attr('stroke-width',0.5/t.k);
+      const fs=Math.max(3,Math.min(8,6/t.k));
+      g.selectAll('.pl').style('font-size',fs+'px').style('display',t.k<0.7?'none':'block');
+      g.selectAll('.pi').attr('font-size',Math.max(7,Math.min(14,12/t.k)));
+      document.getElementById('mz-lbl').textContent='Zoom: '+t.k.toFixed(1)+'×';
+    });
+    svg.call(zoom);
+    document.getElementById('mz-in').onclick=()=>svg.transition().duration(280).call(zoom.scaleBy,1.5);
+    document.getElementById('mz-out').onclick=()=>svg.transition().duration(280).call(zoom.scaleBy,0.67);
+    document.getElementById('mz-rst').onclick=()=>svg.transition().duration(350).call(zoom.transform,d3.zoomIdentity);
+    const withAp=new Set(proyectos.filter(p=>p.estado==='aprobado').map(p=>normM(p.municipio)));
+    const withEv=new Set(proyectos.filter(p=>p.estado==='evaluacion').map(p=>normM(p.municipio)));
+    document.getElementById('ms-ap').textContent=withAp.size;
+    document.getElementById('ms-ev').textContent=withEv.size;
+    g.selectAll('.pp').data(feats).join('path').attr('class','pp').attr('d',path)
+      .attr('fill',d=>esBDR_M(d.properties.departamento)?'#B8D9F0':'#DCE9F5')
+      .attr('stroke','#7AABD4').attr('stroke-width',0.5)
+      .on('mouseenter',function(ev,d){
+        d3.select(this).attr('fill',esBDR_M(d.properties.departamento)?'#8EC5E2':'#BACEDF');
+        const nm=normM(d.properties.departamento);
+        let txt=d.properties.departamento+(esBDR_M(d.properties.departamento)?' · BDR':'');
+        if(withAp.has(nm))txt+=' · 🏭 Aprobado';else if(withEv.has(nm))txt+=' · 🔍 En evaluación';
+        tt.textContent=txt;tt.style.display='block';
+        const rect=outer.getBoundingClientRect();
+        tt.style.left=Math.min(ev.clientX-rect.left+12,rect.width-170)+'px';
+        tt.style.top=Math.max(ev.clientY-rect.top-34,4)+'px';
+      })
+      .on('mouseleave',function(ev,d){d3.select(this).attr('fill',esBDR_M(d.properties.departamento)?'#B8D9F0':'#DCE9F5');tt.style.display='none';});
+    const ABREV={'CORONEL DE MARINA LEONARDO ROSALES':'Cnel. Rosales','GENERAL PUEYRREDON':'Gral. Pueyrredón','EXALTACION DE LA CRUZ':'Exalt. de la Cruz','FLORENTINO AMEGHINO':'F. Ameghino','LEANDRO N ALEM':'L.N. Alem','GENERAL JUAN MADARIAGA':'Gral. Madariaga','ADOLFO GONZALES CHAVES':'A.G. Chaves','SAN ANDRES DE GILES':'S.A. de Giles','SAN ANTONIO DE ARECO':'S.A. de Areco','CAPITAN SARMIENTO':'Cap. Sarmiento','PRESIDENTE PERON':'Pres. Perón','CARMEN DE ARECO':'C. de Areco','GENERAL LAVALLE':'Gral. Lavalle','GENERAL VIAMONTE':'Gral. Viamonte','GENERAL VILLEGAS':'Gral. Villegas','GENERAL ALVARADO':'Gral. Alvarado','GENERAL BELGRANO':'Gral. Belgrano','GENERAL LAS HERAS':'Gral. Las Heras','GENERAL LA MADRID':'Gral. La Madrid','GENERAL ARENALES':'Gral. Arenales','GENERAL ALVEAR':'Gral. Alvear','GENERAL GUIDO':'Gral. Guido','GENERAL PAZ':'Gral. Paz','GENERAL PINTO':'Gral. Pinto','HIPOLITO YRIGOYEN':'H. Yrigoyen','MONTE HERMOSO':'M. Hermoso','MALVINAS ARGENTINAS':'Malvinas Arg.','GENERAL SAN MARTIN':'Gral. S. Martín','GENERAL RODRIGUEZ':'Gral. Rodríguez'};
+    g.selectAll('.pl').data(feats).join('text').attr('class','pl')
+      .attr('x',d=>{const c=path.centroid(d);return isNaN(c[0])?-9999:c[0];})
+      .attr('y',d=>{const c=path.centroid(d);return isNaN(c[1])?-9999:c[1]+3;})
+      .attr('text-anchor','middle').attr('dominant-baseline','middle').attr('pointer-events','none')
+      .style('font-size','6px').style('font-family','system-ui,sans-serif').style('fill','#003070').style('font-weight','400')
+      .text(d=>ABREV[normM(d.properties.departamento)]||d.properties.departamento||'');
+    feats.forEach(d=>{
+      const nm=normM(d.properties.departamento);const c=path.centroid(d);if(isNaN(c[0]))return;
+      if(withAp.has(nm)||withEv.has(nm)){
+        g.append('text').attr('class','pi').attr('x',c[0]).attr('y',c[1]-5)
+          .attr('text-anchor','middle').attr('font-size',12).attr('pointer-events','none')
+          .text(withAp.has(nm)?'🏭':'🔍');
+      }
+    });
+    mapaLoaded=true;
+  }catch(err){st.textContent='Error al cargar el mapa: '+err.message;}
+}
+
+// ══════════════════════════════════════════════
+// NORMATIVA
+// ══════════════════════════════════════════════
+const NORM=[
+  {t:'Ley Nº 15.510 — Régimen Provincial de Inversiones Estratégicas',c:'az',s:'Sancionada 14/11/2024. Legislatura PBA.',arts:[
+    {t:'Art. 1° — Objeto',c:'Crea el RPIE en todo el territorio bonaerense.'},
+    {t:'Art. 2° — Finalidades (8 incisos)',c:'<strong>a)</strong> Sectores estratégicos con valor agregado. <strong>b)</strong> Empleo calificado/registrado. <strong>c)</strong> Proveedores provinciales. <strong>d)</strong> Tecnologías e innovación. <strong>e)</strong> Diversificación productiva. <strong>f)</strong> Exportaciones y sustitución de importaciones. <strong>g)</strong> Desarrollo territorial equitativo. <strong>h)</strong> Nuevos sectores productivos.'},
+    {t:'Art. 3° — Sujetos incluidos',c:'Personas jurídicas constituidas o habilitadas en Argentina. Uniones transitorias, agrupaciones de colaboración y consorcios de cooperación.'},
+    {t:'Art. 4° — Sujetos excluidos',c:'Condenados por delitos tributarios/aduaneros/cambiarios o Ley 27.401. Fallidos (Ley 24.522). Deudores exigibles en Inmobiliario, IIBB, Automotores, Sellos o como agentes ARBA.'},
+    {t:'Art. 5° — Sectores alcanzados',c:'a) Industria manufacturera. b) Servicios (turismo, logística, otros). c) Industrias culturales. d) Salud. e) Intensivos en recursos naturales. Y los declarados de interés estratégico por el PE.'},
+    {t:'Art. 6° — Proyectos alcanzados',c:'a) Planta/inversión nueva. b) Ampliación ≥30% capacidad teórica sin reducción de empleo. c) Nuevo proceso productivo con inversión >30% del activo fijo sin reducción de empleo.'},
+    {t:'Art. 7° — Montos y permanencia',c:'Mínimo: USD 5M. Segmentos: a) 5M–50M; b) 50M–200M; c) >200M. Permanencia: 40% de la inversión comprometida en los primeros 3 años (a) o 2 años (b y c).'},
+    {t:'Art. 14° — Incentivos tributarios',c:'a) Exenciones parciales de Inmobiliario, IIBB y Sellos. b) Estabilidad fiscal. Desde notificación del acto de aprobación. No se otorgan retroactivamente.'},
+    {t:'Art. 15° — Exenciones: plazos y porcentajes',c:'Base: 5M–50M → 5a/30%; 50M–200M → 4a/25%; >200M → 3a/20%. Adicionales: Empleo +2a/+10%; Localización +2a/+10%; Sust. +2a/+10%; Innovación +2a/+10%; Expo +1a/+5%; Género +1a/+5%; Ambiental +1a/+5%. Topes: 5M–50M: 15a/65%; 50M–200M: 14a/60%; >200M: 13a/55%.'},
+    {t:'Art. 16° — Vigencia',c:'Desde la notificación de aprobación, excepto IIBB que rige desde el cumplimiento total del proyecto.'},
+    {t:'Art. 17° — Estabilidad fiscal',c:'Por el plazo otorgado, no se incrementará la carga en IIBB y Sellos. Para >200M con aporte diferencial: hasta 30 años. Inafectable por derogación de la ley o nuevos tributos.'},
+    {t:'Arts. 19°–24° — Régimen sancionatorio',c:'Infracciones: falsedad en DJ, omisión, desafectación de bienes, incumplimiento. Sanciones progresivas: apercibimiento; multa hasta 2.000 sueldos mínimos APN; exclusión con pérdida de beneficios + multa equivalente + intereses. El cese no tiene efectos retroactivos.'}
+  ]},
+  {t:'Decreto Reglamentario Nº 2731/2025',c:'fu',s:'Poder Ejecutivo de la Provincia de Buenos Aires.',arts:[
+    {t:'Art. 5° — Sectores alcanzados',c:'Inscripción en NAIBB-18 o equivalente NAES, según Anexo II. Una actividad contraria al bien común es causal de rechazo.'},
+    {t:'Art. 6° — Proyectos alcanzados',c:'a) Planta nueva: no incluye traslado ni compra de acciones. b) Ampliación: ≥30% capacidad teórica con continuidad física. c) Nuevo proceso: inversión >30% del activo fijo; incorporación de mejoras o innovaciones tecnológicas.'},
+    {t:'Art. 15° inc. 1 — Impuesto Inmobiliario',c:'La exención aplica sobre la proporción del inmueble afectada al proyecto. La empresa informa el % en DJ. La AA comunica a ARBA un único porcentaje por partida inmobiliaria.'},
+    {t:'Art. 15° inc. 2 — IIBB',c:'La exención aplica sobre la participación del incremento de producción/servicios proyectado en el total. El solicitante informa en DJ. La AA comunica a ARBA por código NAIBB-18.'},
+    {t:'Art. 15° inc. 3 — Sellos',c:'Construcción/montaje: contratos de obras, pólizas, materiales, transporte, consultoría, energía. Durante vigencia: materias primas, servicios públicos, logística, mantenimiento, servicios profesionales vinculados.'},
+    {t:'Art. 15° inc. 4 — Criterios para beneficios adicionales',c:'Empleo: nuevos empleos directos registrados sin reducción del plantel. Localización: municipio BDR (Anexo III) o parque industrial (Ley 13.744). Sustitución: bien abastecido por importaciones. Innovación: especificaciones significativamente distintas; excluye "llave en mano". Exportaciones: % de incremento vs. composición actual. Género: plan de acciones. Ambiental: plan para eficiencia y sostenibilidad.'},
+    {t:'Anexo III — 92 Partidos de BDR',c:'Municipios con PBG-PBA ≤0,5% según DPE/Ministerio de Economía PBA (año 2023). 92 partidos: 25 de Mayo, 9 de Julio, Adolfo Alsina, Adolfo Gonzales Chaves, Alberti, Arrecifes, Ayacucho, Balcarce, Baradero, Benito Juárez, Berisso, Bolívar, Bragado, <strong>Brandsen</strong>, Cañuelas, Capitán Sarmiento, Carlos Casares, Carlos Tejedor, Carmen de Areco, Castelli, Chacabuco, Chascomús, Chivilcoy, Colón, Coronel de Marina L. Rosales, Coronel Dorrego, Coronel Pringles, Coronel Suárez, Daireaux, Dolores, Exaltación de la Cruz, Florentino Ameghino, General Alvarado, General Alvear, General Arenales, General Belgrano, General Guido, General Juan Madariaga, General La Madrid, General Las Heras, General Lavalle, General Paz, General Pinto, General Viamonte, General Villegas, Guaminí, Hipólito Yrigoyen, La Costa, Laprida, Las Flores, Leandro N. Alem, Lezama, Lincoln, Lobería, Lobos, Magdalena, Maipú, Mar Chiquita, Marcos Paz, Mercedes, Monte, Monte Hermoso, Navarro, Patagones, Pehuajó, Pellegrini, Pila, Pinamar, Presidente Perón, Puán, Punta Indio, Ramallo, Rauch, Rivadavia, Rojas, Roque Pérez, Saavedra, Saladillo, Salliqueló, Salto, San Andrés de Giles, San Antonio de Areco, San Cayetano, San Pedro, San Vicente, Suipacha, Tapalqué, Tordillo, Tornquist, Tres Lomas, Villa Gesell, Villarino.'}
+  ]},
+  {t:'Reglamento Operativo (IF-2026-03811331-GDEBA)',c:'ce',s:'Subsecretaría de Industria y PyMEs. 3 de febrero de 2026.',arts:[
+    {t:'Art. 1° — Procedimiento de adhesión',c:'Presentación por portal.gba.gob.ar. Documentación con carácter de DJ. La sola presentación no genera derecho adquirido.'},
+    {t:'Art. 2° — Plazo de adhesión',c:'Máximo 6 meses desde inicio efectivo del proyecto, acreditado con actas, facturas, contratos u otros instrumentos idóneos.'},
+    {t:'Art. 3° — Estabilidad fiscal excepcional',c:'Proyectos >USD 200M pueden solicitar estabilidad hasta 30 años. Presentar con la solicitud de adhesión.'},
+    {t:'Art. 4° — Condiciones estratégicas adicionales',c:'La documentación de respaldo para beneficios adicionales debe presentarse de manera excluyente junto con la solicitud de adhesión. Los beneficios no respaldados en la presentación inicial no serán considerados.'},
+    {t:'Art. 5° — Programa de Desarrollo de Proveedores (PDPP)',c:'Obligatorio para proyectos >USD 50M. Etapa 1: 30% del monto en 2 años desde inicio de inversión. Etapa 2: 20% en 3 años desde inicio de operaciones.'},
+    {t:'Arts. 9°–14° — Evaluación y resolución',c:'Evaluación: análisis técnico conforme criterios de oportunidad, mérito y conveniencia. Subsanación: 10 días hábiles bajo apercibimiento de archivo. Resolución: 60 días hábiles desde integración completa de la documentación.'},
+    {t:'Arts. 17°–24° — Control y fiscalización',c:'Informes semestrales de avance físico, financiero y de cumplimiento de compromisos. La AA puede requerir auditorías en cualquier etapa. Obligación de información por hasta 3 años adicionales desde inicio de operaciones.'},
+    {t:'Arts. 27°–28° — Caso fortuito y fuerza mayor',c:'Comunicar dentro de los 10 días hábiles con informe técnico fundado. La AA puede suspender obligaciones afectadas. Presentar propuesta de reprogramación en 10 días hábiles desde el cese del evento.'}
+  ]}
+];
+
+function rNorm(){
+  document.getElementById('norm-content').innerHTML=NORM.map((n,ni)=>`
+    <div class="nc"><div class="nhdr ${n.c}"><div><div class="nt2">${n.t}</div><div class="ns">${n.s}</div></div></div>
+    <div>${n.arts.map((a,ai)=>`<div class="ni" onclick="tN('n${ni}a${ai}')"><div class="ni-t">▶ ${a.t}</div></div><div class="nexp" id="n${ni}a${ai}">${a.c}</div>`).join('')}</div></div>`).join('');
+}
+function tN(id){const el=document.getElementById(id);if(el)el.classList.toggle('open');}
+
+// ══════════════════════════════════════════════
+// CRITERIOS
+// ══════════════════════════════════════════════
+function rCrit(){
+  const FINS=[
+    {n:'F1',c:'baz',t:'Sector estratégico provincial',d:'Crear un entorno atractivo para la incorporación de capital en sectores fundamentales.',o:'<strong>Tipo:</strong> Categórico SÍ/NO. Verificar que la actividad figure en el Anexo II Dec. 2731/2025 (NAIBB-18).',nota:null},
+    {n:'F2',c:'baz',t:'Impacto en empleo registrado y calificado',d:'Creación de empleo genuino con cumplimiento de derechos laborales, seguridad y formación.',o:'Variación entre etapa de inversión y operación (Formulario 2,3 Cuadro 11, hoja 3.b). <strong>Indicador:</strong> (empleo directo operación / total rama PBA) × 100.000. Comparar con umbrales OEDE/SIPA por rama y nivel de inversión.',nota:null},
+    {n:'F3',c:'baz',t:'Desarrollo de proveedores provinciales',d:'Empresa con establecimiento productivo y domicilio fiscal en PBA.',o:'<strong>Ind. 04:</strong> SÍ/NO. <strong>Ind. 05:</strong> Solo >USD 50M — % del monto total a proveedores PBA. Línea de base: ≥50%.',nota:null},
+    {n:'F4',c:'baz',t:'Innovación y transferencia tecnológica',d:'Actividades que requieran aplicación de nuevas tecnologías para incrementar productividad.',o:'<strong>6a:</strong> Promedio I+D proyectado (años 1-3) / promedio histórico (T-3 a T-1). Umbral sugerido: ≥10%. <strong>6b:</strong> I+D proyectado años 1-3 / inversión total años 1-3. Umbral sugerido: ≥1%.',nota:'Umbral 10% (6a) y 1% (6b) son criterios propios de la AA, superadores del mínimo normativo de >0%.'},
+    {n:'F5',c:'baz',t:'Diversificación de la matriz productiva',d:'Ampliar sectores productivos en las regiones contemplando recursos disponibles.',o:'<strong>Regla a:</strong> actividad en posición >2 del ranking municipal de establecimientos (CEP XXI). <strong>Regla b:</strong> actividad representa <20% de los establecimientos del municipio. Basta con cumplir una.',nota:'Verificar en CEP XXI — Mapa Productivo (2022): cep21.gob.ar/mapas-productivos'},
+    {n:'F6',c:'baz',t:'Exportaciones y sustitución de importaciones',d:'Producción con potencial exportador o que reemplace importaciones.',o:'<strong>6A Exportaciones:</strong> % sobre exportaciones de la rama ≥5%; o % sobre total RPIE ≥0,5%. <strong>6B Sustitución:</strong> Categórico SÍ/NO. El índice de sustitución se analiza en el Adicional A15.',nota:null},
+    {n:'F7',c:'baz',t:'Desarrollo territorial equitativo (IDTE)',d:'Inversiones cuya localización reduzca desigualdades económicas y sociales.',o:'<strong>IDTE =</strong> Empleo (40%) + Proveedores (30%) + Diversificación F5 (15%) + Primario ≥15% (15%). Resultado: Bajo / Medio bajo / Medio / Medio alto / Alto.',nota:'La variable "Primario ≥15%" usa criterio CEP XXI, distinto del listado de 92 partidos BDR del Anexo III Dec. 2731/2025.'},
+    {n:'F8',c:'baz',t:'Nuevos sectores productivos',d:'Generación y fomento de producción/servicios de sectores nuevos o de escaso desarrollo.',o:'Utiliza el dato de F5 (% de establecimientos). Umbral: ≤10% → sector nuevo o de muy escaso desarrollo local.',nota:null}
+  ];
+  const BENS=[
+    {n:'A13',c:'bfu',t:'Incremento de puestos de empleo',d:'Nuevos empleos directos registrados sin reducción del personal.',o:'(Empleo operación − Dotación actual) / Dotación actual. Umbrales: N1 ≥8% / N2 ≥15% / N3 ≥25%. <strong>+2 años / +10%.</strong>',nota:null},
+    {n:'A14',c:'bfu',t:'Localización',d:'Partido de BDR (Anexo III Dec. 2731/2025) O parque industrial habilitado (Ley 13.744).',o:'SÍ/NO automático según municipio seleccionado. O declaración de parque industrial. <strong>+2 años / +10%.</strong>',nota:null},
+    {n:'A15',c:'bfu',t:'Sustitución de importaciones',d:'Justificar que el bien/servicio es abastecido por importaciones. Aplica si F6-B es "Sí".',o:'Índice = Incidencia importada histórica (prom. 3 años) / Incidencia importada proyectada (prom. 3 años). >1: sustitución. =1: sin cambio. <1: empeoró. <strong>+2 años / +10%.</strong>',nota:null},
+    {n:'A16',c:'bfu',t:'Innovación tecnológica',d:'Especificaciones técnicas significativamente distintas. Excluye "llave en mano".',o:'8 sub-criterios del Dec. 2731/2025 (Form. II 3.h "Proyección"). Mínimo 2 criterios verificados. <strong>+2 años / +10%.</strong>',nota:'Criterio más riguroso que F4. F4 evalúa esfuerzo presupuestario; A16 evalúa resultado de innovación.'},
+    {n:'A17',c:'bfu',t:'Incremento de exportaciones',d:'Incremento respecto de la composición de mercado actual de la empresa. Form. II 3.g.',o:'<strong>17a Bruto:</strong> diferencia prom. años 1-3 vs. inicial. Umbrales N1 ≥20%/N2 ≥15%/N3 ≥10%. <strong>17b Neto:</strong> MI proyectado ≥ MI inicial. Ambos deben verificarse. <strong>+1 año / +5%.</strong>',nota:null},
+    {n:'A18/19',c:'bfu',t:'Política de género',d:'Plan orientado a reducir brechas de desigualdad de género en el ámbito laboral.',o:'SÍ/NO del Plan. 14 opciones de estrategias. Umbrales: N1 ≥1 / N2 ≥2 / N3 ≥3 estrategias. <strong>+1 año / +5%.</strong>',nota:'Umbrales son criterio propio de la AA, no surgen literalmente de la norma. El decreto exige solo "un plan de acciones".'},
+    {n:'A20/21',c:'bfu',t:'Sostenibilidad ambiental',d:'Plan para eficiencia energética, renovables, recursos naturales y biodiversidad.',o:'SÍ/NO del Plan. 11 opciones de acciones. Umbrales: N1 ≥1 / N2 ≥2 / N3 ≥3 acciones. <strong>+1 año / +5%.</strong>',nota:'Mismo caso que A18/19.'}
+  ];
+  const rc=i=>`<div class="icard"><div style="margin-bottom:3px;"><span class="badge ${i.c}">${i.n}</span></div><div class="icard-name">${i.t}</div><div class="icard-def">${i.d}</div><div class="icard-op"><strong>Definición operacional:</strong> ${i.o}</div>${i.nota?`<div class="inote">⚠️ ${i.nota}</div>`:''}</div>`;
+  document.getElementById('crit-fin-c').innerHTML=FINS.map(rc).join('');
+  document.getElementById('crit-ben-c').innerHTML=BENS.map(rc).join('');
+  const tb=document.getElementById('tbl-adic-crit');
+  if(tb)tb.innerHTML=Object.values(AMAP).map(a=>`<tr><td style="padding:5px 9px;border-bottom:1px solid var(--gr-mid);">${a.n}</td><td style="padding:5px 9px;text-align:center;border-bottom:1px solid var(--gr-mid);">+${a.a}</td><td style="padding:5px 9px;text-align:center;border-bottom:1px solid var(--gr-mid);">+${a.p}%</td></tr>`).join('');
+}
+
+// ══════════════════════════════════════════════
+// EXPORTAR
+// ══════════════════════════════════════════════
+function expCSV(){
+  if(!proyectos.length){toast('Sin proyectos.');return;}
+  const H=['ID','CUIT','Razón Social','Nombre','Municipio','BDR','Estado','Sector','Tipo','Monto USD','Inicio','NAIBB','Partida','%Afect.Inm','%Afect.IIBB','Emp.Dir','Emp.Ind','Emp.Act','BDR.loc','Parque','F1','F2','F3','F4','F5','F6','F7','F8','A13','A14','A15','A16','A17','A18','A20','Años','%Excenc','%Inmob','%IIBB','Obs','CondPend','ObsAdic','Carga'];
+  const R=proyectos.map(p=>[p.id,p.cuit,p.razon,p.nombre,p.municipio,p.bdr,p.estado,p.sector,p.tipo,p.monto,p.inicio,p.naibb,p.partida,p.afI,p.afB,p.empDir,p.empInd,p.empAct,p.bdr,p.parque,...Object.values(p.finalidades||{}),...Object.values(p.adicionales||{}),p.beneficio?.anos,p.beneficio?.pct,p.beneficio?.pctInm,p.beneficio?.pctIIBB,p.obs,p.obsCond,p.obsAdic,p.fechaCarga]);
+  const csv=[H,...R].map(r=>r.map(v=>`"${v??''}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download='RPIE_proyectos_'+new Date().toISOString().slice(0,10)+'.csv';a.click();toast('CSV descargado.');
+}
+function expJSON(){if(!proyectos.length){toast('Sin proyectos.');return;}const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(proyectos,null,2));a.download='RPIE_proyectos_'+new Date().toISOString().slice(0,10)+'.json';a.click();toast('JSON descargado.');}
+function expTXT(){
+  if(!proyectos.length){toast('Sin proyectos.');return;}
+  const tI=proyectos.reduce((s,p)=>s+(p.monto||0),0);const tE=proyectos.reduce((s,p)=>s+(p.empDir||0)+(p.empInd||0),0);
+  const sc={};proyectos.forEach(p=>{sc[p.sector]=(sc[p.sector]||0)+1;});
+  let t=`RESUMEN EJECUTIVO — RPIE PROVINCIA DE BUENOS AIRES\nFecha: ${new Date().toLocaleDateString('es-AR')}\n${'='.repeat(55)}\n\nMÉTRICAS\n${'-'.repeat(30)}\nProyectos: ${proyectos.length}\nInversión: USD ${(tI/1e6).toFixed(1)}M\nEmpleo estimado: ${tE.toLocaleString('es-AR')}\nMunicipios: ${new Set(proyectos.map(p=>p.municipio)).size}\n\nSECTORES\n${'-'.repeat(30)}\n`;
+  Object.entries(sc).sort((a,b)=>b[1]-a[1]).forEach(([s,n])=>{t+=`${s}: ${n}\n`;});
+  t+=`\nDETALLE\n${'-'.repeat(30)}\n`;
+  proyectos.forEach((p,i)=>{t+=`\n${i+1}. ${p.nombre} — ${p.razon}\n   Municipio: ${p.municipio}${p.bdr?' (BDR)':''} | Estado: ${p.estado==='aprobado'?'Aprobado':'En evaluación'}\n   Sector: ${p.sector} | Inversión: USD ${(p.monto/1e6).toFixed(2)}M\n   NAIBB: ${p.naibb} | Tipo: ${p.tipo}\n   Empleo dir: ${p.empDir} | Ind: ${p.empInd}\n   Beneficio: ${p.beneficio?.anos}a al ${p.beneficio?.pct}% (Inmob: ${p.beneficio?.pctInm}%, IIBB: ${p.beneficio?.pctIIBB}%)\n${p.obs?'   Obs: '+p.obs+'\n':''}`; });
+  const a=document.createElement('a');a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(t);a.download='RPIE_resumen_'+new Date().toISOString().slice(0,10)+'.txt';a.click();toast('Resumen descargado.');
+}
+async function syncS(){document.getElementById('sync-st').textContent='Sincronizando...';await new Promise(r=>setTimeout(r,1200));document.getElementById('sync-st').textContent='Última sincronización: '+new Date().toLocaleString('es-AR');toast('Sincronizado.');}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+async function init(){
+  // Municipios
+  const sel=document.getElementById('g-municipio');
+  MUNS.slice().sort((a,b)=>a.localeCompare(b)).forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=m+(BDR_SET.has(m)?' ★':'');sel.appendChild(o);});
+  // Ramas
+  poblarRamas();
+  // Rubro exportaciones
+  const selRub=document.getElementById('f6-rubro');
+  EXPO_DATA.forEach(e=>{const o=document.createElement('option');o.value=e.r;o.textContent=e.r;selRub.appendChild(o);});
+  // Tablas de referencia
+  renderEmpTbl(EMPLEO_DATA);renderExpTbl(EXPO_DATA);
+  // Criterios y normativa
+  rCrit();rNorm();
+  // Storage
+  try{const _d=localStorage.getItem('rpie-v5');if(_d)proyectos=JSON.parse(_d);}catch(e){}
+  rDash();updSem();
+}
+init();
+setTimeout(()=>{
+  attachAutoSave();
+  try{
+    const existing=localStorage.getItem('rpie-v5');
+    const stored = existing && existing!=='[]' && existing!=='null' ? JSON.parse(existing) : [];
+    // Agregar proyectos del preload que no estén en localStorage
+    let changed = stored.length === 0;
+    SIDERSA_PRELOAD.forEach(pre => {
+      if (!stored.find(p => p.id === pre.id)) { stored.push(pre); changed = true; }
+    });
+    if (changed) {
+      localStorage.setItem('rpie-v5', JSON.stringify(stored));
+      toast('Proyectos sincronizados ✓');
+    }
+    proyectos = stored;
+    rDash && rDash(); rList && rList();
+  }catch(e){}
+  try{
+    const bor=localStorage.getItem('rpie-v5-borrador');
+    if(bor){const d=JSON.parse(bor);const mins=Math.round((Date.now()-new Date(d._ts))/60000);
+      if(mins<120&&confirm('Hay un borrador sin guardar de hace '+mins+' min. ¿Recuperarlo?')){_proyectoEditandoId=d._editId||null;restaurarFormulario(d);sw('nuevo');}
+      else if(mins>=120)localStorage.removeItem('rpie-v5-borrador');}
+  }catch(e){}
+},800);
+
+let _autoTimer=null,_proyectoEditandoId=null,_modalProjId=null;
+function autoSave(){clearTimeout(_autoTimer);_autoTimer=setTimeout(()=>{try{const d=capturarFormulario();localStorage.setItem('rpie-v5-borrador',JSON.stringify(d));const el=document.getElementById('autosave-ind');if(el){el.textContent='Borrador '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});el.style.color='rgba(255,255,255,.7)';}}catch(e){}},1500);}
+function capturarFormulario(){const gv=id=>document.getElementById(id)?.value||'';return{_ts:new Date().toISOString(),_editId:_proyectoEditandoId,cuit:gv('g-cuit'),razon:gv('g-razon'),nombre:gv('g-nombre'),municipio:gv('g-municipio'),estado:gv('g-estado'),sector:gv('g-sector'),tipo:gv('g-tipo'),monto:gv('g-monto'),inicio:gv('g-inicio'),naibb:gv('g-naibb'),partida:gv('g-partida'),afim:gv('g-afim'),afib:gv('g-afib'),sectorPe:gv('g-sector-pe'),f2rama:document.getElementById('f2-rama')?.value||'',f2op:gv('f2-op'),f2inv:gv('f2-inv'),f2ind:gv('f2-ind'),f2act:gv('f2-act'),f3prov:gv('f3-prov'),f3pct:gv('f3-pct'),f4t3:gv('f4-t3'),f4t2:gv('f4-t2'),f4t1:gv('f4-t1'),f4p1:gv('f4-p1'),f4p2:gv('f4-p2'),f4p3:gv('f4-p3'),f4inv3:gv('f4-inv3'),f5pct:gv('f5-pct'),f5rank:gv('f5-rank'),f6rubro:gv('f6-rubro'),f6expoProy:gv('f6-expo-proy'),f6sust:gv('f6-sust'),f7emp:gv('f7-emp'),f7prov:gv('f7-prov'),f7prim:gv('f7-prim'),a14parque:gv('a14-parque'),a15fobH:gv('a15-fob-h'),a15cantH:gv('a15-cant-h'),a15ppesosH:gv('a15-ppesos-h'),a15tcH:gv('a15-tc-h'),a15fobP:gv('a15-fob-p'),a15cantP:gv('a15-cant-p'),a15pusdP:gv('a15-pusd-p'),inn:[1,2,3,4,5,6,7,8].map(i=>document.getElementById('i'+i)?.checked||false),a17ini:gv('a17-ini'),a17a1:gv('a17-a1'),a17a2:gv('a17-a2'),a17a3:gv('a17-a3'),a17prodIni:gv('a17-prod-ini'),a17prodA1:gv('a17-prod-a1'),a17miIni:gv('a17-mi-ini'),a17miA1:gv('a17-mi-a1'),a18plan:gv('a18-plan'),gc:[...document.querySelectorAll('.gc')].map(e=>e.checked),a18obs:gv('a18-obs'),a20plan:gv('a20-plan'),ac:[...document.querySelectorAll('.ac')].map(e=>e.checked),a20obs:gv('a20-obs'),obsGral:gv('obs-gral'),obsCond:gv('obs-cond'),obsAdic:gv('obs-adic')};}
+function restaurarFormulario(d){if(!d)return;const sv=(id,val)=>{const el=document.getElementById(id);if(el&&val!==undefined&&val!==null&&val!=='')el.value=val;};sv('g-cuit',d.cuit);sv('g-razon',d.razon);sv('g-nombre',d.nombre);sv('g-municipio',d.municipio);sv('g-estado',d.estado);sv('g-sector',d.sector);sv('g-tipo',d.tipo);sv('g-monto',d.monto);sv('g-inicio',d.inicio);sv('g-naibb',d.naibb);sv('g-partida',d.partida);sv('g-afim',d.afim||d.afI);sv('g-afib',d.afib||d.afB);sv('g-sector-pe',d.sectorPe);if(d.f2rama){const s=document.getElementById('f2-rama');if(s)s.value=d.f2rama;}sv('f2-op',d.f2op||d.empDir);sv('f2-inv',d.f2inv||d.empInv);sv('f2-ind',d.f2ind||d.empInd);sv('f2-act',d.f2act||d.empAct);sv('f3-prov',d.f3prov);sv('f3-pct',d.f3pct);sv('f4-t3',d.f4t3);sv('f4-t2',d.f4t2);sv('f4-t1',d.f4t1);sv('f4-p1',d.f4p1);sv('f4-p2',d.f4p2);sv('f4-p3',d.f4p3);sv('f4-inv3',d.f4inv3);sv('f5-pct',d.f5pct);sv('f5-rank',d.f5rank);sv('f6-rubro',d.f6rubro);sv('f6-expo-proy',d.f6expoProy);sv('f6-sust',d.f6sust);sv('f7-emp',d.f7emp);sv('f7-prov',d.f7prov);sv('f7-prim',d.f7prim);sv('a14-parque',d.a14parque);sv('a15-fob-h',d.a15fobH);sv('a15-cant-h',d.a15cantH);sv('a15-ppesos-h',d.a15ppesosH);sv('a15-tc-h',d.a15tcH);sv('a15-fob-p',d.a15fobP);sv('a15-cant-p',d.a15cantP);sv('a15-pusd-p',d.a15pusdP);if(d.inn)d.inn.forEach((v,i)=>{const el=document.getElementById('i'+(i+1));if(el)el.checked=v;});sv('a17-ini',d.a17ini);sv('a17-a1',d.a17a1);sv('a17-a2',d.a17a2);sv('a17-a3',d.a17a3);sv('a17-prod-ini',d.a17prodIni);sv('a17-prod-a1',d.a17prodA1);sv('a17-mi-ini',d.a17miIni);sv('a17-mi-a1',d.a17miA1);sv('a18-plan',d.a18plan);if(d.a18plan==='Si'){const e=document.getElementById('a18-est');if(e)e.style.display='block';}if(d.gc){const els=document.querySelectorAll('.gc');d.gc.forEach((v,i)=>{if(els[i])els[i].checked=v;});}sv('a18-obs',d.a18obs);sv('a20-plan',d.a20plan);if(d.a20plan==='Si'){const e=document.getElementById('a20-est');if(e)e.style.display='block';}if(d.ac){const els=document.querySelectorAll('.ac');d.ac.forEach((v,i)=>{if(els[i])els[i].checked=v;});}sv('a20-obs',d.a20obs);sv('obs-gral',d.obsGral||d.obs);sv('obs-cond',d.obsCond);sv('obs-adic',d.obsAdic);try{onMontoChange&&onMontoChange();calcA14&&calcA14();}catch(e){}try{calcF1();calcF2();calcF3();calcF4();calcF5();calcF6A();calcF6B();calcIDTE();calcA13();calcA14();calcA15();calcA16();calcA17();calcA18();calcA20();calcBen();}catch(e){}}
+function attachAutoSave(){document.querySelectorAll('#panel-nuevo input,#panel-nuevo select,#panel-nuevo textarea').forEach(el=>{el.addEventListener('input',autoSave);el.addEventListener('change',autoSave);});}
+function abrirProyecto(id){const p=proyectos.find(x=>x.id===id);if(!p)return;_modalProjId=id;document.getElementById('modal-title').textContent=p.nombre+' \u2014 '+p.razon;const fmtV=v=>v===true?'<span class="ib-si">\u2713 Cumple</span>':v===false?'<span class="ib-no">\u2717 No cumple</span>':'<span class="ib-nd">\u2014</span>';const fins=p.finalidades||{};const adic=p.adicionales||{};const ben=p.beneficio?p.beneficio.anos+' a\xf1os / '+p.beneficio.pct+'% (Inmob: '+p.beneficio.pctInm+'%, IIBB: '+p.beneficio.pctIIBB+'%)':'Sin calcular';document.getElementById('modal-body').innerHTML=`<div class="modal-sec-title">Datos del proyecto</div><div class="modal-grid"><div class="mf"><label>CUIT</label><input id="me-cuit" value="${p.cuit||''}"></div><div class="mf"><label>Raz\xf3n social</label><input id="me-razon" value="${p.razon||''}"></div><div class="mf"><label>Nombre del proyecto</label><input id="me-nombre" value="${p.nombre||''}"></div><div class="mf"><label>Municipio</label><input id="me-municipio" value="${p.municipio||''}"></div><div class="mf"><label>Sector</label><input id="me-sector" value="${p.sector||''}"></div><div class="mf"><label>Tipo de proyecto</label><select id="me-tipo"><option value="Planta nueva" ${p.tipo==='Planta nueva'?'selected':''}>Planta o inversi\xf3n nueva</option><option value="Ampliaci\xf3n" ${p.tipo==='Ampliaci\xf3n'?'selected':''}>Ampliaci\xf3n</option><option value="Nuevo proceso" ${p.tipo==='Nuevo proceso'?'selected':''}>Nuevo proceso productivo</option></select></div><div class="mf"><label>Monto (USD)</label><input id="me-monto" type="number" value="${p.monto||''}"></div><div class="mf"><label>Estado</label><select id="me-estado"><option value="evaluacion" ${p.estado==='evaluacion'?'selected':''}>En evaluaci\xf3n</option><option value="aprobado" ${p.estado==='aprobado'?'selected':''}>Aprobado</option></select></div><div class="mf"><label>NAIBB-18</label><input id="me-naibb" value="${p.naibb||''}"></div><div class="mf"><label>Partida inmobiliaria</label><input id="me-partida" value="${p.partida||''}"></div><div class="mf"><label>% afectaci\xf3n inmueble</label><input id="me-afim" type="number" value="${p.afI||100}"></div><div class="mf"><label>% producci\xf3n nueva</label><input id="me-afib" type="number" value="${p.afB||100}"></div><div class="mf"><label>Fecha inicio</label><input id="me-inicio" type="date" value="${p.inicio||''}"></div></div><div class="modal-sec-title">Empleo</div><div class="modal-grid"><div class="mf"><label>Dotaci\xf3n actual (F931 ARCA)</label><input id="me-empact" type="number" value="${p.empAct||''}"></div><div class="mf"><label>Empleo directo \u2014 operaci\xf3n</label><input id="me-empdir" type="number" value="${p.empDir||''}"></div><div class="mf"><label>Empleo indirecto \u2014 operaci\xf3n</label><input id="me-empind" type="number" value="${p.empInd||''}"></div></div><div class="modal-sec-title">Beneficio calculado</div><div style="font-size:12px;color:var(--az-dk);padding:5px 0;">`+ben+` &nbsp;|&nbsp; BDR: ${p.bdr?'<span class="ib-si">S\xed</span>':'<span class="ib-nd">No</span>'}</div><div class="modal-sec-title">Finalidades (art. 2\xb0)</div><div style="display:flex;flex-wrap:wrap;gap:5px;padding:3px 0;font-size:11px;"><span>F1 Sector: `+fmtV(fins.f1)+`</span><span>F2 Empleo: `+fmtV(fins.f2)+`</span><span>F3 Proveedores: `+fmtV(fins.f3)+`</span><span>F4 Innovaci\xf3n: `+fmtV(fins.f4)+`</span><span>F5 Diversif.: `+fmtV(fins.f5)+`</span><span>F6 Expo/Sust.: `+fmtV(fins.f6)+`</span><span>F7 Territorial: `+fmtV(fins.f7)+`</span><span>F8 Nuevos sect.: `+fmtV(fins.f8)+`</span></div><div class="modal-sec-title">Adicionales (art. 15\xb0)</div><div style="display:flex;flex-wrap:wrap;gap:5px;padding:3px 0;font-size:11px;"><span>A13 Empleo: `+fmtV(adic.a13)+`</span><span>A14 Localiz.: `+fmtV(adic.a14)+`</span><span>A15 Sust.imp.: `+fmtV(adic.a15)+`</span><span>A16 Innovaci\xf3n: `+fmtV(adic.a16)+`</span><span>A17 Expo: `+fmtV(adic.a17)+`</span><span>A18 G\xe9nero: `+fmtV(adic.a18)+`</span><span>A20 Ambiental: `+fmtV(adic.a20)+`</span></div><div class="modal-sec-title">Observaciones</div><div class="modal-grid"><div class="mf full"><label>Observaciones generales</label><textarea id="me-obs">`+(p.obs||'')+`</textarea></div><div class="mf full"><label>Condicionamientos y documentaci\xf3n pendiente</label><textarea id="me-obsCond">`+(p.obsCond||'')+`</textarea></div><div class="mf full"><label>Observaciones sobre adicionales</label><textarea id="me-obsAdic">`+(p.obsAdic||'')+`</textarea></div></div>`;document.getElementById('modal-overlay').classList.add('open');}
+function cerrarModalBtn(){document.getElementById('modal-overlay').classList.remove('open');_modalProjId=null;}
+function guardarDesdeModal(){const id=_modalProjId;const idx=proyectos.findIndex(x=>x.id===id);if(idx===-1)return;const gv=eid=>document.getElementById(eid)?.value||'';const gn=eid=>parseFloat(document.getElementById(eid)?.value)||0;const BDR=typeof MUNICIPIOS_BDR!=='undefined'?MUNICIPIOS_BDR:new Set();proyectos[idx]={...proyectos[idx],cuit:gv('me-cuit'),razon:gv('me-razon'),nombre:gv('me-nombre'),municipio:gv('me-municipio'),sector:gv('me-sector'),tipo:gv('me-tipo'),monto:gn('me-monto'),estado:gv('me-estado'),inicio:gv('me-inicio'),naibb:gv('me-naibb'),partida:gv('me-partida'),afI:gn('me-afim'),afB:gn('me-afib'),empAct:gn('me-empact'),empDir:gn('me-empdir'),empInd:gn('me-empind'),obs:gv('me-obs'),obsCond:gv('me-obsCond'),obsAdic:gv('me-obsAdic'),bdr:BDR.has(gv('me-municipio')),fechaModif:new Date().toISOString()};try{localStorage.setItem('rpie-v5',JSON.stringify(proyectos));scheduleSync&&scheduleSync();}catch(e){}cerrarModalBtn();rList&&rList();rDash&&rDash();toast('Cambios guardados \u2713');}
+function editarEnFormulario(id){const p=proyectos.find(x=>x.id===id);if(!p)return;cerrarModalBtn();_proyectoEditandoId=id;restaurarFormulario(p);typeof sw!=='undefined'?sw('nuevo'):nTab('nuevo');goPTab&&goPTab(0);const btn=document.getElementById('btn-guardar');if(btn)btn.textContent='\u2713 Actualizar proyecto';toast('Proyecto cargado. Edit\xe1 y guard\xe1 cuando termines.');}
+function eliminarProyecto(id){if(!confirm('\xbfEliminar este proyecto? Esta acci\xf3n no se puede deshacer.'))return;proyectos=proyectos.filter(x=>x.id!==id);try{localStorage.setItem('rpie-v5',JSON.stringify(proyectos));scheduleSync&&scheduleSync();}catch(e){}rList&&rList();rDash&&rDash();toast('Proyecto eliminado.');}
+function guardar(){const razon=document.getElementById('g-razon')?.value?.trim();const nombre=document.getElementById('g-nombre')?.value?.trim();const municipio=document.getElementById('g-municipio')?.value;const sector=document.getElementById('g-sector')?.value;const tipo=document.getElementById('g-tipo')?.value;const estado=document.getElementById('g-estado')?.value;const monto=parseFloat(document.getElementById('g-monto')?.value)||0;const naibb=document.getElementById('g-naibb')?.value?.trim();if(!razon||!nombre||!municipio||!sector||!tipo||!estado||monto<5e6||!naibb){toast('Completar campos obligatorios (*). Monto m\xednimo USD 5M.');return;}const nv=monto>=200e6?3:monto>=50e6?2:1;let aB,pB,mA,mP;if(nv===3){aB=3;pB=20;mA=13;mP=55;}else if(nv===2){aB=4;pB=25;mA=14;mP=60;}else{aB=5;pB=30;mA=15;mP=65;}const AMAP_l=typeof AMAP!=='undefined'?AMAP:{};const rA_l=typeof resultadosA!=='undefined'?resultadosA:{};const rF_l=typeof resultadosF!=='undefined'?resultadosF:{};let aAdd=0,pAdd=0;Object.entries(AMAP_l).forEach(([k,d])=>{if(rA_l[k]===true){aAdd+=d.a;pAdd+=d.p;}});const aT=Math.min(aB+aAdd,mA),pT=Math.min(pB+pAdd,mP);const afI=parseFloat(document.getElementById('g-afim')?.value)||100;const afB2=parseFloat(document.getElementById('g-afib')?.value)||100;const BDR=typeof MUNICIPIOS_BDR!=='undefined'?MUNICIPIOS_BDR:new Set();const nuevo={cuit:document.getElementById('g-cuit')?.value||'',razon,nombre,municipio,estado,sector,tipo,monto,inicio:document.getElementById('g-inicio')?.value||'',naibb,partida:document.getElementById('g-partida')?.value||'',afI,afB:afB2,empDir:parseFloat(document.getElementById('f2-op')?.value)||0,empInd:parseFloat(document.getElementById('f2-ind')?.value)||0,empAct:parseFloat(document.getElementById('f2-act')?.value)||0,f2rama:document.getElementById('f2-rama')?.value||'',f3prov:document.getElementById('f3-prov')?.value||'',f3pct:parseFloat(document.getElementById('f3-pct')?.value)||0,a17ini:document.getElementById('a17-ini')?.value||'',a17a1:document.getElementById('a17-a1')?.value||'',a17a2:document.getElementById('a17-a2')?.value||'',a17a3:document.getElementById('a17-a3')?.value||'',bdr:BDR.has(municipio),parque:document.getElementById('a14-parque')?.value||'',finalidades:{...rF_l},adicionales:{...rA_l},beneficio:{anos:aT,pct:pT,pctInm:+((afI/100)*pT).toFixed(2),pctIIBB:+((afB2/100)*pT).toFixed(2)},obs:document.getElementById('obs-gral')?.value||'',obsCond:document.getElementById('obs-cond')?.value||'',obsAdic:document.getElementById('obs-adic')?.value||'',fechaCarga:new Date().toISOString()};if(_proyectoEditandoId!==null){const idx=proyectos.findIndex(x=>x.id===_proyectoEditandoId);if(idx!==-1){nuevo.id=_proyectoEditandoId;nuevo.fechaCarga=proyectos[idx].fechaCarga;nuevo.fechaModif=new Date().toISOString();proyectos[idx]=nuevo;toast('\u2713 Proyecto actualizado.');}_proyectoEditandoId=null;const btn=document.getElementById('btn-guardar');if(btn)btn.textContent='\u2713 Guardar proyecto';}else{nuevo.id=Date.now();proyectos.push(nuevo);toast('\u2713 Proyecto guardado.');}try{localStorage.setItem('rpie-v5',JSON.stringify(proyectos));scheduleSync&&scheduleSync();}catch(e){}try{localStorage.removeItem('rpie-v5-borrador');}catch(e){}typeof mapaLoaded!=='undefined'&&(mapaLoaded=false);resetForm&&resetForm();typeof sw!=='undefined'?sw('proyectos'):nTab('proyectos');}
+
+
+function exportarDrive() {
+  try {
+    const datos = JSON.parse(localStorage.getItem('rpie-v5') || '[]');
+    if (!datos.length) { toast('No hay proyectos para exportar.'); return; }
+    const blob = new Blob([JSON.stringify(datos, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const fecha = new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = 'RPIE_backup_' + fecha + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('Backup descargado ✓ — guardalo en tu Drive manualmente.');
+  } catch(e) {
+    toast('Error al exportar: ' + e.message);
+  }
+}
+
+
+// ══ SINCRONIZACIÓN CON GOOGLE DRIVE ═══════════════════════════════════════
+const DRIVE_FILE_ID = '1f2TV4DM_-dTb23YZdony-hqJ5Obuw3TR';
+let _driveToken = null;
+let _syncTimer = null;
+let _pendingSync = false;
+
+async function getDriveToken() {
+  // Usa el token de Google Identity Services si está disponible
+  return new Promise((resolve) => {
+    if (window.google && window.google.accounts) {
+      window.google.accounts.oauth2.initTokenClient({
+        client_id: '', // no se necesita en contexto de extensión Drive
+        scope: 'https://www.googleapis.com/auth/drive.file',
+        callback: (r) => { _driveToken = r.access_token; resolve(r.access_token); }
+      }).requestAccessToken({prompt:''});
+    } else {
+      resolve(null);
+    }
+  });
+}
+
+async function leerDesdeDrive() {
+  try {
+    const token = await getGoogleToken();
+    if (!token) return null;
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${DRIVE_FILE_ID}?alt=media`,
+      { headers: { Authorization: 'Bearer ' + token } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.proyectos || null;
+  } catch(e) { return null; }
+}
+
+async function guardarEnDrive(proyectosArr) {
+  try {
+    const token = await getGoogleToken();
+    if (!token) { marcarPendiente(); return; }
+    const body = JSON.stringify({
+      version: '5.1',
+      ultimaActualizacion: new Date().toISOString(),
+      proyectos: proyectosArr
+    }, null, 2);
+    const res = await fetch(
+      `https://www.googleapis.com/upload/drive/v3/files/${DRIVE_FILE_ID}?uploadType=media`,
+      {
+        method: 'PATCH',
+        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body
+      }
+    );
+    if (res.ok) {
+      const ind = document.getElementById('autosave-ind');
+      if (ind) { ind.textContent = '✓ Drive ' + new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}); ind.style.color='#7AB8F5'; }
+      _pendingSync = false;
+    } else {
+      marcarPendiente();
+    }
+  } catch(e) { marcarPendiente(); }
+}
+
+function marcarPendiente() {
+  _pendingSync = true;
+  const ind = document.getElementById('autosave-ind');
+  if (ind) { ind.textContent = '⚠ Sin sync Drive'; ind.style.color='#F5A800'; }
+}
+
+async function getGoogleToken() {
+  // Intenta obtener token del contexto actual (página con sesión Google)
+  try {
+    const r = await fetch('https://www.googleapis.com/oauth2/v1/tokeninfo');
+    // Si falla, usamos el flujo de autorización
+  } catch(e) {}
+  
+  // Alternativa: pedir al usuario que pegue su token
+  if (!_driveToken) {
+    const msg = '⚠️ Para sincronizar con Drive, ingresá tu token de acceso Google.\n\nObtenerlo en: https://developers.google.com/oauthplayground\nScope: https://www.googleapis.com/auth/drive.file\n\nPegalo aquí:';
+    const tk = prompt(msg);
+    if (tk && tk.trim()) { _driveToken = tk.trim(); }
+  }
+  return _driveToken;
+}
+
+function scheduleSync() {
+  clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(() => {
+    const datos = JSON.parse(localStorage.getItem('rpie-v5') || '[]');
+    guardarEnDrive(datos);
+  }, 3000); // 3 seg después de la última acción
+}
+
+</script>
+
+</body>
+</html>
