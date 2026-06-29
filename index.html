@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tablero RPIE PBA v5.1</title>
+<meta name="description" content="Tablero RPIE PBA — Régimen Provincial de Inversiones Estratégicas">
+<title>Tablero RPIE PBA — Dirección de Planeamiento Industrial</title>
 </head>
 <body style="margin:0;padding:0;height:100vh;">
 
@@ -359,7 +360,16 @@ body{font-family:system-ui,sans-serif;font-size:13px;background:#fff;color:var(-
         <div class="sub-lbl">Datos impositivos</div>
         <div class="fg4" style="margin-bottom:10px;">
           <div class="fgrp"><label class="flbl">Código NAIBB-18 principal <span class="r">*</span></label><input class="fi" id="g-naibb" placeholder="101012"></div>
-          <div class="fgrp"><label class="flbl">Partida inmobiliaria</label><input class="fi" id="g-partida" placeholder="055-078841-1"></div>
+          <div class="fgrp" style="grid-column:1/-1;">
+  <label class="flbl">Partidas inmobiliarias <span class="note">(hasta 8 — una por línea o separadas por barra)</span></label>
+  <div id="partidas-wrap" style="display:flex;flex-direction:column;gap:4px;">
+    <div class="partida-row" style="display:flex;gap:4px;align-items:center;">
+      <input class="fi" id="g-partida-1" placeholder="055-078841-1" style="flex:1;">
+      <button type="button" class="btn btn-sm" onclick="agregarPartida()" title="Agregar partida" style="padding:4px 8px;font-size:13px;">+</button>
+    </div>
+  </div>
+  <span class="fh">Completar al menos la partida principal. El beneficio de Inmobiliario aplica sobre las partidas declaradas.</span>
+</div>
           <div class="fgrp"><label class="flbl">% afectación inmueble al proyecto</label><input class="fi" id="g-afim" type="number" min="0" max="100" placeholder="100" oninput="calcBen()"></div>
           <div class="fgrp"><label class="flbl">% producción nueva / total</label><input class="fi" id="g-afib" type="number" min="0" max="100" placeholder="100" oninput="calcBen()"></div>
         </div>
@@ -388,8 +398,14 @@ body{font-family:system-ui,sans-serif;font-size:13px;background:#fff;color:var(-
       <div class="fg" style="margin-bottom:10px;">
         <div class="fgrp">
           <label class="flbl">Rama de actividad (OEDE/SIPA) <span class="r">*</span></label>
-          <input class="search-inp" id="f2-search" placeholder="Buscar rama..." oninput="filtrarRamas()" style="margin-bottom:4px;">
-          <select class="fs" id="f2-rama" size="5" style="height:auto;" onchange="calcF2()"></select>
+          <div style="position:relative;">
+            <input class="fi" id="f2-search" placeholder="Escribir para buscar rama..." oninput="filtrarRamas()" autocomplete="off"
+              style="margin-bottom:2px;" onfocus="mostrarDropRama()" onblur="setTimeout(ocultarDropRama,200)">
+            <div id="f2-rama-val" style="font-size:10px;color:var(--az-dk);padding:2px 0;min-height:14px;font-weight:600;"></div>
+            <div id="f2-drop" style="display:none;position:absolute;z-index:200;background:#fff;border:1px solid var(--gr-mid);border-radius:4px;max-height:180px;overflow-y:auto;width:100%;box-shadow:0 4px 12px rgba(0,0,0,.12);">
+              <select id="f2-rama" size="8" style="width:100%;border:none;outline:none;font-size:11px;padding:2px;" onchange="seleccionarRama()"></select>
+            </div>
+          </div>
         </div>
         <div class="fgrp">
           <label class="flbl">Empleo directo — etapa de inversión (Formulario 2,3 Cuadro 11)</label><input class="fi" id="f2-inv" type="number" min="0" placeholder="0" oninput="calcF2()">
@@ -409,9 +425,12 @@ body{font-family:system-ui,sans-serif;font-size:13px;background:#fff;color:var(-
       <div class="fg" style="margin-bottom:8px;">
         <div class="fgrp"><label class="flbl">¿Contrata proveedores radicados en PBA?</label>
           <select class="fs" id="f3-prov" onchange="calcF3()"><option value="">...</option><option value="Si">Sí</option><option value="No">No</option></select></div>
-        <div class="fgrp"><label class="flbl">% del monto total destinado a proveedores PBA</label>
-          <input class="fi" id="f3-pct" type="number" min="0" max="100" step="0.1" placeholder="0" oninput="calcF3()">
-          <span class="fh">Para proyectos &gt;USD 50M: PDPP obligatorio con línea de base ≥50% (art. 13° Ley 15.510 y art. 5° Reglamento Operativo).</span></div>
+        <div class="fgrp"><label class="flbl">Monto destinado a proveedores PBA (USD) <span class="note">— PDPP Cuadros 4+5, campo "Total etapa"</span></label>
+          <input class="fi" id="f3-monto" type="number" min="0" placeholder="0" oninput="calcF3()">
+          <span class="fh">Suma de los totales de etapa del PDPP (cuadros 4 y 5 del Formulario 3.e.).</span></div>
+        <div class="fgrp"><label class="flbl">% sobre inversión total <span class="note">(calculado automáticamente)</span></label>
+          <input class="fi" id="f3-pct" type="number" min="0" max="100" step="0.1" placeholder="0" oninput="calcF3()" readonly style="background:var(--gr-lt);color:var(--az-dk);font-weight:600;">
+          <span class="fh">Para proyectos &gt;USD 50M: PDPP obligatorio — umbral ≥50% sobre monto total a proveedores (Art. 13° Ley 15.510 / Art. 5° RO).<br>Etapa 1: ≥30% en 2 años desde inicio inversión. Etapa 2: ≥20% en 3 años desde inicio operaciones.</span></div>
       </div>
       <div id="f3-res" class="calc-res r-gris"><span>⚪</span> Completar datos</div>
     </div></div>
@@ -434,7 +453,9 @@ body{font-family:system-ui,sans-serif;font-size:13px;background:#fff;color:var(-
       <div class="sub-lbl" style="margin-top:12px;">6.b) Ratio I+D proyectado / Inversión total del proyecto — primeros 3 años — Form. II 3.h, Punto 1 "Proyección"</div>
       <div class="info">Umbral mínimo: &gt;0%. Umbral sugerido por la AA: <strong>≥1%</strong> (estándar internacional para considerar inversión en I+D significativa).</div>
       <div class="fg" style="margin-top:8px;">
-        <div class="fgrp"><label class="flbl">Inversión total del proyecto — Años 1+2+3 (USD) <span class="note">— extraer de Form. II 3.c, Cronograma de inversiones</span></label><input class="fi" id="f4-inv3" type="number" min="0" placeholder="0" oninput="calcF4()"></div>
+        <div class="fgrp"><label class="flbl">Inversión total del proyecto — Años 1+2+3 (USD) <span class="note">— Form. II 3.c, Cuadro 2. Se autocompleta con el monto total si la inversión se concentra en ≤3 años.</span></label>
+        <input class="fi" id="f4-inv3" type="number" min="0" placeholder="0" oninput="calcF4()">
+        <span class="fh">Si el proyecto concentra toda la inversión en los primeros 3 años, este campo se iguala al monto total. Ajustar manualmente si hay inversión en años posteriores.</span></div>
       </div>
       <div id="f4b-res" class="calc-res r-gris"><span>⚪</span> Completar inversión total para calcular ratio</div>
     </div></div>
@@ -1007,6 +1028,8 @@ function onSectorChange(){
 }
 function onMontoChange(){
   const m=getMonto();const nv=getNivel();
+  // Autocompletar F4-inv3 si está vacío
+  setTimeout(()=>{const f4=document.getElementById('f4-inv3');if(f4&&m>0&&!f4.value){f4.value=m;calcF4&&calcF4();}},100);
   const el=document.getElementById('g-nivel-disp');
   if(m>=5e6){
     el.style.display='block';
@@ -1644,6 +1667,8 @@ setTimeout(()=>{
       if(mins<120&&confirm('Hay un borrador sin guardar de hace '+mins+' min. ¿Recuperarlo?')){_proyectoEditandoId=d._editId||null;restaurarFormulario(d);sw('nuevo');}
       else if(mins>=120)localStorage.removeItem('rpie-v5-borrador');}
   }catch(e){}
+  // Sincronizar con Google Sheets
+  initConSheets();
 },800);
 
 let _autoTimer=null,_proyectoEditandoId=null,_modalProjId=null;
@@ -1656,7 +1681,7 @@ function cerrarModalBtn(){document.getElementById('modal-overlay').classList.rem
 function guardarDesdeModal(){const id=_modalProjId;const idx=proyectos.findIndex(x=>x.id===id);if(idx===-1)return;const gv=eid=>document.getElementById(eid)?.value||'';const gn=eid=>parseFloat(document.getElementById(eid)?.value)||0;const BDR=typeof MUNICIPIOS_BDR!=='undefined'?MUNICIPIOS_BDR:new Set();proyectos[idx]={...proyectos[idx],cuit:gv('me-cuit'),razon:gv('me-razon'),nombre:gv('me-nombre'),municipio:gv('me-municipio'),sector:gv('me-sector'),tipo:gv('me-tipo'),monto:gn('me-monto'),estado:gv('me-estado'),inicio:gv('me-inicio'),naibb:gv('me-naibb'),partida:gv('me-partida'),afI:gn('me-afim'),afB:gn('me-afib'),empAct:gn('me-empact'),empDir:gn('me-empdir'),empInd:gn('me-empind'),obs:gv('me-obs'),obsCond:gv('me-obsCond'),obsAdic:gv('me-obsAdic'),bdr:BDR.has(gv('me-municipio')),fechaModif:new Date().toISOString()};try{localStorage.setItem('rpie-v5',JSON.stringify(proyectos));scheduleSync&&scheduleSync();}catch(e){}cerrarModalBtn();rList&&rList();rDash&&rDash();toast('Cambios guardados \u2713');}
 function editarEnFormulario(id){const p=proyectos.find(x=>x.id===id);if(!p)return;cerrarModalBtn();_proyectoEditandoId=id;restaurarFormulario(p);typeof sw!=='undefined'?sw('nuevo'):nTab('nuevo');goPTab&&goPTab(0);const btn=document.getElementById('btn-guardar');if(btn)btn.textContent='\u2713 Actualizar proyecto';toast('Proyecto cargado. Edit\xe1 y guard\xe1 cuando termines.');}
 function eliminarProyecto(id){if(!confirm('\xbfEliminar este proyecto? Esta acci\xf3n no se puede deshacer.'))return;proyectos=proyectos.filter(x=>x.id!==id);try{localStorage.setItem('rpie-v5',JSON.stringify(proyectos));scheduleSync&&scheduleSync();}catch(e){}rList&&rList();rDash&&rDash();toast('Proyecto eliminado.');}
-function guardar(){const razon=document.getElementById('g-razon')?.value?.trim();const nombre=document.getElementById('g-nombre')?.value?.trim();const municipio=document.getElementById('g-municipio')?.value;const sector=document.getElementById('g-sector')?.value;const tipo=document.getElementById('g-tipo')?.value;const estado=document.getElementById('g-estado')?.value;const monto=parseFloat(document.getElementById('g-monto')?.value)||0;const naibb=document.getElementById('g-naibb')?.value?.trim();if(!razon||!nombre||!municipio||!sector||!tipo||!estado||monto<5e6||!naibb){toast('Completar campos obligatorios (*). Monto m\xednimo USD 5M.');return;}const nv=monto>=200e6?3:monto>=50e6?2:1;let aB,pB,mA,mP;if(nv===3){aB=3;pB=20;mA=13;mP=55;}else if(nv===2){aB=4;pB=25;mA=14;mP=60;}else{aB=5;pB=30;mA=15;mP=65;}const AMAP_l=typeof AMAP!=='undefined'?AMAP:{};const rA_l=typeof resultadosA!=='undefined'?resultadosA:{};const rF_l=typeof resultadosF!=='undefined'?resultadosF:{};let aAdd=0,pAdd=0;Object.entries(AMAP_l).forEach(([k,d])=>{if(rA_l[k]===true){aAdd+=d.a;pAdd+=d.p;}});const aT=Math.min(aB+aAdd,mA),pT=Math.min(pB+pAdd,mP);const afI=parseFloat(document.getElementById('g-afim')?.value)||100;const afB2=parseFloat(document.getElementById('g-afib')?.value)||100;const BDR=typeof MUNICIPIOS_BDR!=='undefined'?MUNICIPIOS_BDR:new Set();const nuevo={cuit:document.getElementById('g-cuit')?.value||'',razon,nombre,municipio,estado,sector,tipo,monto,inicio:document.getElementById('g-inicio')?.value||'',naibb,partida:document.getElementById('g-partida')?.value||'',afI,afB:afB2,empDir:parseFloat(document.getElementById('f2-op')?.value)||0,empInd:parseFloat(document.getElementById('f2-ind')?.value)||0,empAct:parseFloat(document.getElementById('f2-act')?.value)||0,f2rama:document.getElementById('f2-rama')?.value||'',f3prov:document.getElementById('f3-prov')?.value||'',f3pct:parseFloat(document.getElementById('f3-pct')?.value)||0,a17ini:document.getElementById('a17-ini')?.value||'',a17a1:document.getElementById('a17-a1')?.value||'',a17a2:document.getElementById('a17-a2')?.value||'',a17a3:document.getElementById('a17-a3')?.value||'',bdr:BDR.has(municipio),parque:document.getElementById('a14-parque')?.value||'',finalidades:{...rF_l},adicionales:{...rA_l},beneficio:{anos:aT,pct:pT,pctInm:+((afI/100)*pT).toFixed(2),pctIIBB:+((afB2/100)*pT).toFixed(2)},obs:document.getElementById('obs-gral')?.value||'',obsCond:document.getElementById('obs-cond')?.value||'',obsAdic:document.getElementById('obs-adic')?.value||'',fechaCarga:new Date().toISOString()};if(_proyectoEditandoId!==null){const idx=proyectos.findIndex(x=>x.id===_proyectoEditandoId);if(idx!==-1){nuevo.id=_proyectoEditandoId;nuevo.fechaCarga=proyectos[idx].fechaCarga;nuevo.fechaModif=new Date().toISOString();proyectos[idx]=nuevo;toast('\u2713 Proyecto actualizado.');}_proyectoEditandoId=null;const btn=document.getElementById('btn-guardar');if(btn)btn.textContent='\u2713 Guardar proyecto';}else{nuevo.id=Date.now();proyectos.push(nuevo);toast('\u2713 Proyecto guardado.');}try{localStorage.setItem('rpie-v5',JSON.stringify(proyectos));scheduleSync&&scheduleSync();}catch(e){}try{localStorage.removeItem('rpie-v5-borrador');}catch(e){}typeof mapaLoaded!=='undefined'&&(mapaLoaded=false);resetForm&&resetForm();typeof sw!=='undefined'?sw('proyectos'):nTab('proyectos');}
+function guardar(){const razon=document.getElementById('g-razon')?.value?.trim();const nombre=document.getElementById('g-nombre')?.value?.trim();const municipio=document.getElementById('g-municipio')?.value;const sector=document.getElementById('g-sector')?.value;const tipo=document.getElementById('g-tipo')?.value;const estado=document.getElementById('g-estado')?.value;const monto=parseFloat(document.getElementById('g-monto')?.value)||0;const naibb=document.getElementById('g-naibb')?.value?.trim();if(!razon||!nombre||!municipio||!sector||!tipo||!estado||monto<5e6||!naibb){toast('Completar campos obligatorios (*). Monto m\xednimo USD 5M.');return;}const nv=monto>=200e6?3:monto>=50e6?2:1;let aB,pB,mA,mP;if(nv===3){aB=3;pB=20;mA=13;mP=55;}else if(nv===2){aB=4;pB=25;mA=14;mP=60;}else{aB=5;pB=30;mA=15;mP=65;}const AMAP_l=typeof AMAP!=='undefined'?AMAP:{};const rA_l=typeof resultadosA!=='undefined'?resultadosA:{};const rF_l=typeof resultadosF!=='undefined'?resultadosF:{};let aAdd=0,pAdd=0;Object.entries(AMAP_l).forEach(([k,d])=>{if(rA_l[k]===true){aAdd+=d.a;pAdd+=d.p;}});const aT=Math.min(aB+aAdd,mA),pT=Math.min(pB+pAdd,mP);const afI=parseFloat(document.getElementById('g-afim')?.value)||100;const afB2=parseFloat(document.getElementById('g-afib')?.value)||100;const BDR=typeof MUNICIPIOS_BDR!=='undefined'?MUNICIPIOS_BDR:new Set();const nuevo={cuit:document.getElementById('g-cuit')?.value||'',razon,nombre,municipio,estado,sector,tipo,monto,inicio:document.getElementById('g-inicio')?.value||'',naibb,partida:getPartidas(),afI,afB:afB2,empDir:parseFloat(document.getElementById('f2-op')?.value)||0,empInd:parseFloat(document.getElementById('f2-ind')?.value)||0,empAct:parseFloat(document.getElementById('f2-act')?.value)||0,f2rama:document.getElementById('f2-rama')?.value||'',f3prov:document.getElementById('f3-prov')?.value||'',f3pct:parseFloat(document.getElementById('f3-pct')?.value)||0,a17ini:document.getElementById('a17-ini')?.value||'',a17a1:document.getElementById('a17-a1')?.value||'',a17a2:document.getElementById('a17-a2')?.value||'',a17a3:document.getElementById('a17-a3')?.value||'',bdr:BDR.has(municipio),parque:document.getElementById('a14-parque')?.value||'',finalidades:{...rF_l},adicionales:{...rA_l},beneficio:{anos:aT,pct:pT,pctInm:+((afI/100)*pT).toFixed(2),pctIIBB:+((afB2/100)*pT).toFixed(2)},obs:document.getElementById('obs-gral')?.value||'',obsCond:document.getElementById('obs-cond')?.value||'',obsAdic:document.getElementById('obs-adic')?.value||'',fechaCarga:new Date().toISOString()};if(_proyectoEditandoId!==null){const idx=proyectos.findIndex(x=>x.id===_proyectoEditandoId);if(idx!==-1){nuevo.id=_proyectoEditandoId;nuevo.fechaCarga=proyectos[idx].fechaCarga;nuevo.fechaModif=new Date().toISOString();proyectos[idx]=nuevo;toast('\u2713 Proyecto actualizado.');}_proyectoEditandoId=null;const btn=document.getElementById('btn-guardar');if(btn)btn.textContent='\u2713 Guardar proyecto';}else{nuevo.id=Date.now();proyectos.push(nuevo);toast('\u2713 Proyecto guardado.');}try{localStorage.setItem('rpie-v5',JSON.stringify(proyectos));scheduleSync&&scheduleSync();}catch(e){}try{localStorage.removeItem('rpie-v5-borrador');}catch(e){}typeof mapaLoaded!=='undefined'&&(mapaLoaded=false);resetForm&&resetForm();typeof sw!=='undefined'?sw('proyectos'):nTab('proyectos');}
 
 
 function exportarDrive() {
@@ -1768,6 +1793,323 @@ function scheduleSync() {
     const datos = JSON.parse(localStorage.getItem('rpie-v5') || '[]');
     guardarEnDrive(datos);
   }, 3000); // 3 seg después de la última acción
+}
+
+
+// ══ SINCRONIZACIÓN GOOGLE SHEETS ══════════════════════════════════════════
+const SHEETS_ID = '1j4RV3pv1gr60OGcyZ4Ic6U2uxkhk89wFt_FgrQYrvXo';
+const API_KEY   = 'AIzaSyD6H-UObEenVPz2Ct6CTwjDa3r0hN6HeBs';
+const SHEET_TAB = 'Sheet1';
+let _syncTimer  = null;
+let _oauthToken = null;
+
+// Columnas del Sheet (deben coincidir con el header de la hoja)
+const COLS = ['ID','CUIT','Razon Social','Nombre Proyecto','Municipio','Estado',
+  'Sector','Tipo Proyecto','Monto USD','Fecha Inicio Proyecto','Fecha Inicio Operaciones',
+  'NAIBB-18','Partida Inmobiliaria','Afectacion Inmueble %','Produccion Nueva %',
+  'Empleo Actual (F931)','Empleo Directo Operacion','Empleo Indirecto Operacion',
+  'BDR','Parque Industrial','Beneficio Anos','Beneficio %','Beneficio Inmob %','Beneficio IIBB %',
+  'F1 Sector','F2 Empleo','F3 Proveedores','F4 Innovacion','F5 Diversificacion',
+  'F6 Expo/Sust','F7 Territorial','F8 Nuevos Sectores',
+  'A13 Empleo Adic','A14 Localizacion','A15 Sust Importaciones','A16 Innovacion',
+  'A17 Exportaciones','A18 Genero','A20 Ambiental',
+  'Observaciones Generales','Condicionamientos y Pendientes','Observaciones Adicionales',
+  'Fecha Carga'];
+
+function fmtIndicador(v) {
+  if (v === true)  return 'Cumple';
+  if (v === false) return 'No cumple';
+  return '';
+}
+
+function proyectoToRow(p) {
+  const fins = p.finalidades || {};
+  const adic = p.adicionales || {};
+  return [
+    p.id, p.cuit, p.razon, p.nombre, p.municipio,
+    p.estado === 'aprobado' ? 'Aprobado' : 'En evaluación',
+    p.sector, p.tipo, p.monto,
+    p.inicio || '', p.inicioOp || '',
+    p.naibb, p.partida, p.afI || 100, p.afB || 100,
+    p.empAct || 0, p.empDir || 0, p.empInd || 0,
+    p.bdr ? 'Sí' : 'No', p.parque || '',
+    p.beneficio?.anos || '', p.beneficio?.pct || '',
+    p.beneficio?.pctInm || '', p.beneficio?.pctIIBB || '',
+    fmtIndicador(fins.f1), fmtIndicador(fins.f2), fmtIndicador(fins.f3),
+    fmtIndicador(fins.f4), fmtIndicador(fins.f5), fmtIndicador(fins.f6),
+    fmtIndicador(fins.f7), fmtIndicador(fins.f8),
+    fmtIndicador(adic.a13), fmtIndicador(adic.a14), fmtIndicador(adic.a15),
+    fmtIndicador(adic.a16), fmtIndicador(adic.a17), fmtIndicador(adic.a18),
+    fmtIndicador(adic.a20),
+    p.obs || '', p.obsCond || '', p.obsAdic || '',
+    p.fechaCarga ? p.fechaCarga.slice(0,10) : ''
+  ];
+}
+
+// ── Autenticación OAuth 2.0 (Google Identity Services) ────────────────────
+function cargarGIS() {
+  return new Promise((resolve) => {
+    if (window.google?.accounts?.oauth2) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.onload = resolve;
+    document.head.appendChild(s);
+  });
+}
+
+async function obtenerToken() {
+  if (_oauthToken) return _oauthToken;
+  await cargarGIS();
+  return new Promise((resolve, reject) => {
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: '837186937059-placeholder.apps.googleusercontent.com',
+      scope: 'https://www.googleapis.com/auth/spreadsheets',
+      callback: (resp) => {
+        if (resp.error) { reject(resp.error); return; }
+        _oauthToken = resp.access_token;
+        setTimeout(() => { _oauthToken = null; }, 3500000);
+        resolve(_oauthToken);
+      }
+    });
+    client.requestAccessToken({prompt: 'none'});
+  });
+}
+
+// ── Leer proyectos desde Sheets ───────────────────────────────────────────
+async function leerDesdeSheets() {
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEETS_ID}/values/${SHEET_TAB}?key=${API_KEY}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const rows = data.values || [];
+    if (rows.length < 2) return [];
+    const header = rows[0];
+    return rows.slice(1).map(row => {
+      const obj = {};
+      header.forEach((col, i) => { obj[col] = row[i] || ''; });
+      const fins = {};
+      const adic = {};
+      ['F1 Sector','F2 Empleo','F3 Proveedores','F4 Innovacion','F5 Diversificacion',
+       'F6 Expo/Sust','F7 Territorial','F8 Nuevos Sectores'].forEach(k => {
+        const key = k.toLowerCase().replace(/[^a-z0-9]/g,'').replace('nuevossectores','f8');
+        const v = obj[k];
+        fins[key] = v === 'Cumple' ? true : v === 'No cumple' ? false : null;
+      });
+      ['A13 Empleo Adic','A14 Localizacion','A15 Sust Importaciones',
+       'A16 Innovacion','A17 Exportaciones','A18 Genero','A20 Ambiental'].forEach(k => {
+        const key = 'a' + k.match(/A(\d+)/)[1];
+        const v = obj[k];
+        adic[key] = v === 'Cumple' ? true : v === 'No cumple' ? false : null;
+      });
+      return {
+        id: parseInt(obj['ID']) || Date.now(),
+        cuit: obj['CUIT'], razon: obj['Razon Social'],
+        nombre: obj['Nombre Proyecto'], municipio: obj['Municipio'],
+        estado: obj['Estado'] === 'Aprobado' ? 'aprobado' : 'evaluacion',
+        sector: obj['Sector'], tipo: obj['Tipo Proyecto'],
+        monto: parseFloat(obj['Monto USD']) || 0,
+        inicio: obj['Fecha Inicio Proyecto'], naibb: obj['NAIBB-18'],
+        partida: obj['Partida Inmobiliaria'],
+        afI: parseFloat(obj['Afectacion Inmueble %']) || 100,
+        afB: parseFloat(obj['Produccion Nueva %']) || 100,
+        empAct: parseInt(obj['Empleo Actual (F931)']) || 0,
+        empDir: parseInt(obj['Empleo Directo Operacion']) || 0,
+        empInd: parseInt(obj['Empleo Indirecto Operacion']) || 0,
+        bdr: obj['BDR'] === 'Sí', parque: obj['Parque Industrial'] || '',
+        beneficio: {
+          anos: parseInt(obj['Beneficio Anos']) || 0,
+          pct: parseFloat(obj['Beneficio %']) || 0,
+          pctInm: parseFloat(obj['Beneficio Inmob %']) || 0,
+          pctIIBB: parseFloat(obj['Beneficio IIBB %']) || 0
+        },
+        finalidades: fins, adicionales: adic,
+        obs: obj['Observaciones Generales'],
+        obsCond: obj['Condicionamientos y Pendientes'],
+        obsAdic: obj['Observaciones Adicionales'],
+        fechaCarga: obj['Fecha Carga']
+      };
+    });
+  } catch(e) { console.error('Error leyendo Sheets:', e); return null; }
+}
+
+// ── Escribir todos los proyectos en Sheets ────────────────────────────────
+async function escribirEnSheets(proyectosArr) {
+  try {
+    const token = await obtenerToken();
+    const values = [COLS, ...proyectosArr.map(proyectoToRow)];
+    const res = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEETS_ID}/values/${SHEET_TAB}!A1?valueInputOption=RAW`,
+      {
+        method: 'PUT',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ range: `${SHEET_TAB}!A1`, majorDimension: 'ROWS', values })
+      }
+    );
+    if (res.ok) {
+      updSyncInd('✓ Guardado ' + new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}), '#7AB8F5');
+    } else {
+      const err = await res.json();
+      console.error('Sheets write error:', err);
+      updSyncInd('⚠ Error sync', '#F5A800');
+    }
+  } catch(e) {
+    updSyncInd('⚠ Sin conexión', '#F5A800');
+  }
+}
+
+function updSyncInd(msg, color) {
+  const el = document.getElementById('autosave-ind');
+  if (el) { el.textContent = msg; el.style.color = color || 'rgba(255,255,255,.7)'; }
+}
+
+function scheduleSync() {
+  clearTimeout(_syncTimer);
+  updSyncInd('Guardando...', 'rgba(255,255,255,.5)');
+  _syncTimer = setTimeout(() => {
+    const datos = JSON.parse(localStorage.getItem('rpie-v5') || '[]');
+    escribirEnSheets(datos);
+  }, 2000);
+}
+
+// ── Init con Sheets ───────────────────────────────────────────────────────
+async function initConSheets() {
+  updSyncInd('Conectando con Drive...', 'rgba(255,255,255,.6)');
+  const datos = await leerDesdeSheets();
+  if (datos && datos.length > 0) {
+    proyectos = datos;
+    localStorage.setItem('rpie-v5', JSON.stringify(proyectos));
+    updSyncInd('✓ ' + datos.length + ' proyectos cargados', '#7AB8F5');
+    rDash && rDash();
+    rList && rList();
+  } else {
+    // Fallback a localStorage
+    try {
+      const local = localStorage.getItem('rpie-v5');
+      if (local) { proyectos = JSON.parse(local); rDash && rDash(); rList && rList(); }
+    } catch(e) {}
+    updSyncInd('⚠ Usando datos locales', '#F5A800');
+  }
+}
+
+
+// ══ PARTIDAS INMOBILIARIAS ════════════════════════════════════════════════
+function agregarPartida() {
+  const wrap = document.getElementById('partidas-wrap');
+  const rows = wrap.querySelectorAll('.partida-row');
+  if (rows.length >= 8) { toast('Máximo 8 partidas inmobiliarias.'); return; }
+  const n = rows.length + 1;
+  const div = document.createElement('div');
+  div.className = 'partida-row';
+  div.style.cssText = 'display:flex;gap:4px;align-items:center;';
+  div.innerHTML = `<input class="fi" id="g-partida-${n}" placeholder="Partida ${n}" style="flex:1;">
+    <button type="button" class="btn btn-sm" onclick="this.parentElement.remove()" title="Eliminar" style="padding:4px 8px;font-size:13px;color:var(--ro);">×</button>`;
+  wrap.appendChild(div);
+}
+
+function getPartidas() {
+  const vals = [];
+  document.querySelectorAll('.partida-row input').forEach(inp => {
+    if (inp.value.trim()) vals.push(inp.value.trim());
+  });
+  return vals.join(' / ');
+}
+
+function setPartidas(str) {
+  if (!str) return;
+  const parts = str.split(/[\/\n,;]+/).map(s => s.trim()).filter(Boolean);
+  const wrap = document.getElementById('partidas-wrap');
+  // Limpiar excepto primera fila
+  while (wrap.children.length > 1) wrap.removeChild(wrap.lastChild);
+  // Setear primera
+  const first = wrap.querySelector('#g-partida-1');
+  if (first && parts[0]) first.value = parts[0];
+  // Agregar el resto
+  for (let i = 1; i < parts.length && i < 8; i++) {
+    agregarPartida();
+    const inp = document.getElementById('g-partida-' + (i+1));
+    if (inp) inp.value = parts[i];
+  }
+}
+
+// ══ F2-RAMA: dropdown con búsqueda ════════════════════════════════════════
+function mostrarDropRama() {
+  const drop = document.getElementById('f2-drop');
+  if (drop) drop.style.display = 'block';
+}
+function ocultarDropRama() {
+  const drop = document.getElementById('f2-drop');
+  if (drop) drop.style.display = 'none';
+}
+function seleccionarRama() {
+  const sel = document.getElementById('f2-rama');
+  const valEl = document.getElementById('f2-rama-val');
+  const searchEl = document.getElementById('f2-search');
+  if (!sel.value) return;
+  const opt = sel.options[sel.selectedIndex];
+  if (valEl) valEl.textContent = '✓ ' + opt.textContent;
+  if (searchEl) searchEl.value = opt.textContent;
+  ocultarDropRama();
+  calcF2();
+}
+
+// ══ F3: calcular % automático desde monto proveedores ════════════════════
+const _calcF3Original = typeof calcF3 === 'function' ? calcF3 : null;
+function calcF3() {
+  const monto = parseFloat(document.getElementById('f3-monto')?.value) || 0;
+  const montoTotal = getMonto() || 0;
+  const pctEl = document.getElementById('f3-pct');
+  // Calcular % automático
+  if (monto > 0 && montoTotal > 0 && pctEl) {
+    const pct = (monto / montoTotal) * 100;
+    pctEl.value = pct.toFixed(2);
+  }
+  const prov = document.getElementById('f3-prov')?.value;
+  const pct = parseFloat(document.getElementById('f3-pct')?.value) || 0;
+  const resEl = document.getElementById('f3-res');
+  if (!resEl) return;
+  if (!prov) { setRes('f3-res', null, 'Indicar si contrata proveedores radicados en PBA.'); rF.f3 = null; updSem(); return; }
+  if (prov === 'No') { setRes('f3-res', false, 'No contrata proveedores radicados en PBA.'); rF.f3 = false; updSem(); return; }
+  // Sí contrata — verificar umbral según monto
+  const m = getMonto();
+  if (m >= 50e6) {
+    // PDPP obligatorio — umbral ≥50%
+    const ok = pct >= 50;
+    const etapa1ok = pct >= 30;
+    setRes('f3-res', ok,
+      `Monto a proveedores PBA: <strong>USD ${(monto||0).toLocaleString('es-AR')}</strong> | ` +
+      `% sobre inversión total: <strong>${pct.toLocaleString('es-AR', {maximumFractionDigits:2})}%</strong> | ` +
+      `Umbral mínimo ≥50%: ${ok ? '✓ Cumple' : '✗ No cumple'} | ` +
+      `Etapa 1 (≥30%): ${etapa1ok ? '✓' : '✗'} | Etapa 2: 20% restante en 3 años desde operaciones.`
+    );
+    rF.f3 = ok;
+  } else {
+    // < USD 50M — PDPP no obligatorio, cumple si contrata proveedores PBA
+    setRes('f3-res', true, `Contrata proveedores PBA. Monto: USD ${(monto||0).toLocaleString('es-AR')} (${pct.toFixed(2)}%). Proyecto < USD 50M: PDPP no obligatorio.`);
+    rF.f3 = true;
+  }
+  updSem();
+}
+
+// ══ F4-INV3: autocompletar desde monto total cuando monto cambia ══════════
+function autoF4inv3() {
+  const m = getMonto();
+  const el = document.getElementById('f4-inv3');
+  if (el && m > 0 && !el.value) {
+    el.value = m;
+    calcF4();
+  }
+}
+
+// ══ getPartidas integrado en guardar ══════════════════════════════════════
+// Parchear restaurarFormulario para setear partidas
+const _restOrig = restaurarFormulario;
+function restaurarFormulario(d) {
+  _restOrig(d);
+  if (d.partida) setTimeout(() => setPartidas(d.partida || ''), 100);
 }
 
 </script>
