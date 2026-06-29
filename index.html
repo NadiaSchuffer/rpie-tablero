@@ -767,7 +767,7 @@ body{font-family:system-ui,sans-serif;font-size:13px;background:#fff;color:var(-
     <p style="font-size:11px;color:var(--gr);margin-bottom:9px;">Se actualiza al guardar cada proyecto.</p>
     <div class="er">
       <button class="btn" onclick="syncS()">↻ Sincronizar</button>
-      <a class="btn btn-ce" href="https://docs.google.com/spreadsheets/d/1TtgsIu4LslFY_sNUT-fFb0xlZ83kn5LdP4unkax9dDM/edit" target="_blank">↗ Abrir Sheets</a>
+      <a class="btn btn-ce" href="https://docs.google.com/spreadsheets/d/1j4RV3pv1gr60OGcyZ4Ic6U2uxkhk89wFt_FgrQYrvXo/edit" target="_blank">↗ Abrir Sheets</a>
     </div>
     <div id="sync-st" style="font-size:10px;color:var(--gr);margin-top:7px;"></div></div>
   <div class="card"><div class="ctitle">Reporte para presentación</div><button class="btn" onclick="window.print()">🖨️ Imprimir / PDF</button></div>
@@ -1639,7 +1639,7 @@ function expTXT(){
   proyectos.forEach((p,i)=>{t+=`\n${i+1}. ${p.nombre} — ${p.razon}\n   Municipio: ${p.municipio}${p.bdr?' (BDR)':''} | Estado: ${p.estado==='aprobado'?'Aprobado':'En evaluación'}\n   Sector: ${p.sector} | Inversión: USD ${(p.monto/1e6).toFixed(2)}M\n   NAIBB: ${p.naibb} | Tipo: ${p.tipo}\n   Empleo dir: ${p.empDir} | Ind: ${p.empInd}\n   Beneficio: ${p.beneficio?.anos}a al ${p.beneficio?.pct}% (Inmob: ${p.beneficio?.pctInm}%, IIBB: ${p.beneficio?.pctIIBB}%)\n${p.obs?'   Obs: '+p.obs+'\n':''}`; });
   const a=document.createElement('a');a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(t);a.download='RPIE_resumen_'+new Date().toISOString().slice(0,10)+'.txt';a.click();toast('Resumen descargado.');
 }
-async function syncS(){document.getElementById('sync-st').textContent='Sincronizando...';await new Promise(r=>setTimeout(r,1200));document.getElementById('sync-st').textContent='Última sincronización: '+new Date().toLocaleString('es-AR');toast('Sincronizado.');}
+// syncS reemplazada abajo
 
 // ══════════════════════════════════════════════
 // INIT
@@ -1679,7 +1679,66 @@ async function init(){
   rDash();updSem();
 }
 init();
+
+// ══════════════════════════════════════════════
+// GOOGLE SHEETS SYNC — OAuth2
+// ══════════════════════════════════════════════
+const GSHEETS_CLIENT_ID='842466243967-0k2rt3vcav1mq874eac2p86fdf7jhtqr.apps.googleusercontent.com';
+const GSHEETS_API_KEY='AIzaSyD6H-UObEenVPz2Ct6CTwjDa3r0hN6HeBs';
+const GSHEETS_ID='1j4RV3pv1gr60OGcyZ4Ic6U2uxkhk89wFt_FgrQYrvXo';
+const GSHEETS_SCOPE='https://www.googleapis.com/auth/spreadsheets';
+let gsToken=null;
+
+function setSyncSt(msg){const el=document.getElementById('sync-st');if(el)el.textContent=msg;}
+
+async function getGSToken(){
+  return new Promise((resolve,reject)=>{
+    if(gsToken){resolve(gsToken);return;}
+    const client=google.accounts.oauth2.initTokenClient({
+      client_id:GSHEETS_CLIENT_ID,
+      scope:GSHEETS_SCOPE,
+      callback:(resp)=>{
+        if(resp.error){reject(new Error(resp.error));return;}
+        gsToken=resp.access_token;
+        setTimeout(()=>{gsToken=null;},3500000);
+        resolve(gsToken);
+      }
+    });
+    client.requestAccessToken();
+  });
+}
+
+async function syncS(){
+  if(!proyectos.length){toast('Sin proyectos para sincronizar.');return;}
+  setSyncSt('Autenticando con Google...');
+  try{
+    const token=await getGSToken();
+    setSyncSt('Escribiendo en Sheets...');
+    const H=['ID','CUIT','Razon Social','Nombre Proyecto','Municipio','Estado','Sector','Tipo Proyecto','Monto USD','Fecha Inicio Proyecto','NAIBB-18','Partida Inmobiliaria','Afectacion Inmueble %','Afectacion IIBB %','Empleo Actual','Empleo Directo Operacion','Empleo Indirecto Operacion','BDR','Parque Industrial','Beneficio Anos','Beneficio %','Beneficio Inmob %','Beneficio IIBB %','F1','F2','F3','F4','F5','F6','F7','F8','A13','A14','A15','A16','A17','A18','A20','Observaciones Generales','Condicionamientos y Pendientes','Observaciones Adicionales','Fecha Carga'];
+    const rows=[H,...proyectos.map(p=>[
+      p.id,p.cuit,p.razon,p.nombre,p.municipio,p.estado,p.sector,p.tipo,p.monto,p.inicio,
+      p.naibb,p.partida,p.afI,p.afB,p.empAct,p.empDir,p.empInd,p.bdr?'Sí':'No',p.parque||'',
+      p.beneficio?.anos,p.beneficio?.pct,p.beneficio?.pctInm,p.beneficio?.pctIIBB,
+      ...[p.finalidades?.f1,p.finalidades?.f2,p.finalidades?.f3,p.finalidades?.f4,p.finalidades?.f5,p.finalidades?.f6,p.finalidades?.f7,p.finalidades?.f8].map(v=>v===true?'Sí':v===false?'No':'—'),
+      ...[p.adicionales?.a13,p.adicionales?.a14,p.adicionales?.a15,p.adicionales?.a16,p.adicionales?.a17,p.adicionales?.a18,p.adicionales?.a20].map(v=>v===true?'Sí':v===false?'No':'—'),
+      p.obs||'',p.obsCond||'',p.obsAdic||'',p.fechaCarga||''
+    ])];
+    const resp=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${GSHEETS_ID}/values/Hoja1!A1?valueInputOption=RAW`,{
+      method:'PUT',
+      headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body:JSON.stringify({values:rows})
+    });
+    if(!resp.ok){const e=await resp.json();throw new Error(e.error?.message||resp.status);}
+    setSyncSt('Última sincronización: '+new Date().toLocaleString('es-AR'));
+    toast('✓ Sincronizado con Google Sheets');
+  }catch(err){
+    setSyncSt('Error: '+err.message);
+    toast('Error al sincronizar: '+err.message);
+    gsToken=null;
+  }
+}
 </script>
 
+<script src="https://accounts.google.com/gsi/client" async></script>
 </body>
 </html>
