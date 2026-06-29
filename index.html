@@ -237,7 +237,7 @@ body{font-family:system-ui,sans-serif;font-size:13px;background:#fff;color:var(-
   <button class="nt" onclick="nTab('proyectos')" id="nt-proyectos">Proyectos</button>
   <button class="nt" onclick="nTab('criterios')" id="nt-criterios">Criterios</button>
   <button class="nt" onclick="nTab('normativa')" id="nt-normativa">Normativa</button>
-  <button class="nt" onclick="nTab('exportar')" id="nt-exportar">Exportar</button><button class="nt" onclick="getGoogleToken().then(tk=>{if(tk)guardarEnDrive(JSON.parse(localStorage.getItem('rpie-v5')||'[]'))})" id="nt-drive" title="Backup en Google Drive" style="color:#7AB8F5;">&#9729; Drive</button>
+  <button class="nt" onclick="nTab('exportar')" id="nt-exportar">Exportar</button>
 </nav>
 <div class="layout">
 <aside class="sb">
@@ -1700,99 +1700,6 @@ function exportarDrive() {
   } catch(e) {
     toast('Error al exportar: ' + e.message);
   }
-}
-
-
-// ══ SINCRONIZACIÓN CON GOOGLE DRIVE ═══════════════════════════════════════
-const DRIVE_FILE_ID = '1f2TV4DM_-dTb23YZdony-hqJ5Obuw3TR';
-let _driveToken = null;
-let _syncTimer = null;
-let _pendingSync = false;
-
-async function getDriveToken() {
-  // Usa el token de Google Identity Services si está disponible
-  return new Promise((resolve) => {
-    if (window.google && window.google.accounts) {
-      window.google.accounts.oauth2.initTokenClient({
-        client_id: '', // no se necesita en contexto de extensión Drive
-        scope: 'https://www.googleapis.com/auth/drive.file',
-        callback: (r) => { _driveToken = r.access_token; resolve(r.access_token); }
-      }).requestAccessToken({prompt:''});
-    } else {
-      resolve(null);
-    }
-  });
-}
-
-async function leerDesdeDrive() {
-  try {
-    const token = await getGoogleToken();
-    if (!token) return null;
-    const res = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${DRIVE_FILE_ID}?alt=media`,
-      { headers: { Authorization: 'Bearer ' + token } }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.proyectos || null;
-  } catch(e) { return null; }
-}
-
-async function guardarEnDrive(proyectosArr) {
-  try {
-    const token = await getGoogleToken();
-    if (!token) { marcarPendiente(); return; }
-    const body = JSON.stringify({
-      version: '5.1',
-      ultimaActualizacion: new Date().toISOString(),
-      proyectos: proyectosArr
-    }, null, 2);
-    const res = await fetch(
-      `https://www.googleapis.com/upload/drive/v3/files/${DRIVE_FILE_ID}?uploadType=media`,
-      {
-        method: 'PATCH',
-        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-        body
-      }
-    );
-    if (res.ok) {
-      const ind = document.getElementById('autosave-ind');
-      if (ind) { ind.textContent = '✓ Drive ' + new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}); ind.style.color='#7AB8F5'; }
-      _pendingSync = false;
-    } else {
-      marcarPendiente();
-    }
-  } catch(e) { marcarPendiente(); }
-}
-
-function marcarPendiente() {
-  _pendingSync = true;
-  const ind = document.getElementById('autosave-ind');
-  if (ind) { ind.textContent = '⚠ Sin sync Drive'; ind.style.color='#F5A800'; }
-}
-
-async function getGoogleToken() {
-  // Intenta obtener token del contexto actual (página con sesión Google)
-  try {
-    const r = await fetch('https://www.googleapis.com/oauth2/v1/tokeninfo');
-    // Si falla, usamos el flujo de autorización
-  } catch(e) {}
-  
-  // Alternativa: pedir al usuario que pegue su token
-  if (!_driveToken) {
-    const msg = '⚠️ Para sincronizar con Drive, ingresá tu token de acceso Google.\n\nObtenerlo en: https://developers.google.com/oauthplayground\nScope: https://www.googleapis.com/auth/drive.file\n\nPegalo aquí:';
-    const tk = prompt(msg);
-    if (tk && tk.trim()) { _driveToken = tk.trim(); }
-  }
-  return _driveToken;
-}
-
-function scheduleSync() {
-  clearTimeout(_syncTimer);
-  _syncTimer = setTimeout(() => {
-    const datos = JSON.parse(localStorage.getItem('rpie-v5') || '[]');
-    guardarEnDrive(datos);
-  }, 3000); // 3 seg después de la última acción
 }
 
 
