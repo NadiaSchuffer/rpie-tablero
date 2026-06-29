@@ -956,6 +956,7 @@ function goPTab(n){
     document.getElementById('pt'+i).classList.toggle('active',i===n);
   }
   if(n===4)calcBen();
+  if(n===2)restaurarCheckboxes();
 }
 
 // ══════════════════════════════════════════════
@@ -1189,20 +1190,38 @@ function calcA17(){
 function togGen(){document.getElementById('a18-est').style.display=gv('a18-plan')==='Si'?'block':'none';}
 function togAmb(){document.getElementById('a20-est').style.display=gv('a20-plan')==='Si'?'block':'none';}
 
+// Estado persistente de checkboxes género y ambiental
+let gcState=[];let acState=[];
+
 function calcA18(){
   const plan=gv('a18-plan');
-  if(plan!=='Si'){setRes('a18-res',plan==='No'?false:null,plan==='No'?'No presenta Plan de Equidad de Género.':'Indicar si presenta Plan de Equidad de Género.');rA.a18=plan==='No'?false:null;calcBen();return;}
-  const n=document.querySelectorAll('.gc:checked').length;const nv=getNivel();const umb=nv===1?1:nv===2?2:3;const ok=n>=umb;
+  if(plan!=='Si'){setRes('a18-res',plan==='No'?false:null,plan==='No'?'No presenta Plan de Equidad de Género.':'Indicar si presenta Plan de Equidad de Género.');rA.a18=plan==='No'?false:null;gcState=[];calcBen();return;}
+  const boxes=[...document.querySelectorAll('.gc')];
+  gcState=boxes.map(cb=>cb.checked);
+  const n=gcState.filter(Boolean).length;const nv=getNivel();const umb=nv===1?1:nv===2?2:3;const ok=n>=umb;
   setRes('a18-res',ok,`Plan presente. Estrategias marcadas: <strong>${n}</strong> (umbral N${nv}: ≥${umb}). ${ok?'+1 año / +5%.':'No alcanza el umbral mínimo.'}`);
   rA.a18=ok;calcBen();
 }
 
 function calcA20(){
   const plan=gv('a20-plan');
-  if(plan!=='Si'){setRes('a20-res',plan==='No'?false:null,plan==='No'?'No presenta Plan de Sostenibilidad Ambiental.':'Indicar si presenta Plan Ambiental.');rA.a20=plan==='No'?false:null;calcBen();return;}
-  const n=document.querySelectorAll('.ac:checked').length;const nv=getNivel();const umb=nv===1?1:nv===2?2:3;const ok=n>=umb;
+  if(plan!=='Si'){setRes('a20-res',plan==='No'?false:null,plan==='No'?'No presenta Plan de Sostenibilidad Ambiental.':'Indicar si presenta Plan Ambiental.');rA.a20=plan==='No'?false:null;acState=[];calcBen();return;}
+  const boxes=[...document.querySelectorAll('.ac')];
+  acState=boxes.map(cb=>cb.checked);
+  const n=acState.filter(Boolean).length;const nv=getNivel();const umb=nv===1?1:nv===2?2:3;const ok=n>=umb;
   setRes('a20-res',ok,`Plan presente. Acciones marcadas: <strong>${n}</strong> (umbral N${nv}: ≥${umb}). ${ok?'+1 año / +5%.':'No alcanza el umbral mínimo.'}`);
   rA.a20=ok;calcBen();
+}
+
+function restaurarCheckboxes(){
+  if(gcState.length){
+    const boxes=[...document.querySelectorAll('.gc')];
+    boxes.forEach((cb,i)=>{if(gcState[i]!==undefined)cb.checked=gcState[i];});
+  }
+  if(acState.length){
+    const boxes=[...document.querySelectorAll('.ac')];
+    boxes.forEach((cb,i)=>{if(acState[i]!==undefined)cb.checked=acState[i];});
+  }
 }
 
 // Listeners
@@ -1328,7 +1347,7 @@ function resetForm(){
   document.getElementById('f7-div-auto').textContent='— se alimenta automáticamente del resultado de F5';
   document.getElementById('a15-calc-h').style.display='none';document.getElementById('a15-calc-p').style.display='none';
   rF={f1:null,f2:null,f3:null,f4:null,f5:null,f6:null,f6a:null,f6b:null,f7:null,f8:null};
-  rA={a13:null,a14:null,a15:null,a16:null,a17:null,a17a:null,a17b:null,a18:null,a20:null};
+  rA={a13:null,a14:null,a15:null,a16:null,a17:null,a17a:null,a17b:null,a18:null,a20:null};gcState=[];acState=[];
   document.querySelectorAll('.calc-res').forEach(el=>{el.className='calc-res r-gris';el.innerHTML='<span>⚪</span><span>—</span>';});
   document.getElementById('ben-cont').innerHTML='<div class="calc-res r-gris"><span>⚪</span><span>Completar monto de inversión para activar el cálculo.</span></div>';
   updSem();goPTab(0);
